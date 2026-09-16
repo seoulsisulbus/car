@@ -576,13 +576,13 @@
         }
 
         async function cleanUpOldFiles(reservations) {
-            // 🚀 기준일을 오늘이 아닌 '2일 전'으로 계산합니다.
+            // 🚀 1. 기준일 계산 ('2일 전' 날짜를 뽑아냅니다)
             const limitDate = new Date(_now);
             limitDate.setDate(limitDate.getDate() - 2);
             const limitStr = `${limitDate.getFullYear()}-${String(limitDate.getMonth() + 1).padStart(2, '0')}-${String(limitDate.getDate()).padStart(2, '0')}`;
             
+            // 🚀 2. [기존] 차량 배차에 직접 첨부된 파일 지우기
             for (let r of reservations) {
-                // 시작일이 '2일 전'보다 더 과거일 때만 파일을 삭제!
                 if (r.startDate < limitStr && r.photoUrl) {
                     try {
                         const fileRef = storage.refFromURL(r.photoUrl);
@@ -591,6 +591,35 @@
                     r.photoUrl = null; 
                     db.collection('reservations').doc(r.id).set(r, { merge: true }).catch(e => {});
                 }
+            }
+
+            // 🚀 3. [추가됨] 새로운 '날짜별 신청서 보관함' 싹 비우기
+            try {
+                const snapshot = await db.collection('daily_attachments').get();
+                
+                // 보관함에 있는 모든 날짜를 하나씩 까봅니다.
+                snapshot.forEach(async (doc) => {
+                    const docDate = doc.id; // (예: "2026-09-18")
+                    
+                    // 만약 그 날짜가 기준일(2일 전)보다 더 과거라면? -> 사형 선고! 🔨
+                    if (docDate < limitStr) {
+                        const data = doc.data();
+                        const files = data.files || [];
+                        
+                        // ① 스토리지(서버 창고)에 있는 진짜 파일들부터 하나씩 삭제
+                        for (let f of files) {
+                            try {
+                                const fileRef = storage.refFromURL(f.url);
+                                await fileRef.delete();
+                            } catch (err) {}
+                        }
+                        
+                        // ② 파일 지웠으니 DB(명부)에서도 해당 날짜 보관함 기록 완전 삭제
+                        await db.collection('daily_attachments').doc(docDate).delete();
+                    }
+                });
+            } catch (error) {
+                console.error("보관함 자동 삭제 실패:", error);
             }
         }
 
