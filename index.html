@@ -291,10 +291,12 @@
                                     </div>
                                 </div>
                                 
-                                <div class="form-group" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #ccc; margin-top:15px;">
-                                    <label style="color: #007bff; font-weight:700; cursor:pointer;">📎 사진/문서 첨부 (선택)</label>
-                                    <input type="file" id="photo_${v}" style="background: #fff; padding: 5px; font-size: 0.8rem;">
-                                    <small id="photo_status_${v}" style="display:block; color:#28a745; margin-top:5px; font-weight:bold;"></small>
+                                <!-- 🚀 [수정] 보관함에서 신청서 골라오기 (기본 빈 껍데기) -->
+                                <div class="form-group" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #007bff; margin-top:15px;">
+                                    <label style="color: #007bff; font-weight:700;">📎 신청서 연결 (보관함에서 선택)</label>
+                                    <select id="photo_select_${v}" class="daily-photo-selector" style="width: 100%; padding: 6px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                                        <option value="">연결 안 함 (선택)</option>
+                                    </select>
                                 </div>
 
                                 <div style="border-top: 1px dashed #ccc; margin-top: 15px; padding-top: 10px;">
@@ -1052,28 +1054,14 @@
                 allReservations.splice(existingIndex, 1);
             }
 
-            const photoInput = document.getElementById(`photo_${vehicleName}`);
-            if (photoInput && photoInput.files.length > 0) {
-                showLoading('파일 업로드 중...');
-                try {
-                    const file = photoInput.files[0];
-                    const processedBlob = await processFile(file);
-                    
-                    const storageRef = storage.ref(`reservation_files/${docId}_${file.name}`);
-                    const uploadTask = storageRef.put(processedBlob);
-                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('업로드 시간 초과')), 20000));
-                    
-                    await Promise.race([uploadTask, timeout]);
-                    photoUrl = await storageRef.getDownloadURL();
-                    
-                } catch (error) {
-                    alert("⚠️ 파일 업로드 실패: " + error.message);
-                    hideLoading(); 
-                    return; 
-                }
-            } else {
-                showLoading('예약 등록 중...');
+            // 🚀 [수정됨] 무거운 업로드 과정 싹 삭제! 드롭다운에서 선택한 파일 주소만 1초 만에 쏙! 가져옵니다.
+            const photoSelect = document.getElementById(`photo_select_${vehicleName}`);
+            if (photoSelect && photoSelect.value) {
+                photoUrl = photoSelect.value;
             }
+
+            // 로딩 화면은 아주 짧게만 지나갑니다.
+            showLoading('예약 등록 중...');
 
             allReservations.push({
                 id: docId, startDate: currentDate, dates: dates, vehicle: vehicleName,
@@ -1367,16 +1355,17 @@
             }
             contentUl.innerHTML = html;
             
-            // --- 🚀 [수정됨] 날짜별 신청서 보관함 보여주기 (업로드된 파일 리스트 & 삭제 버튼) ---
-            // --- 🚀 [초슬림 수정됨] 날짜별 신청서 리스트 ---
+            // --- 🚀 [초슬림 수정됨] 날짜별 신청서 리스트 & 드롭다운 자동 업데이트 ---
             const attachmentUl = document.getElementById('daily-attachment-list');
             if (attachmentUl) {
                 const files = (typeof dailyAttachments !== 'undefined' && dailyAttachments[date]) ? dailyAttachments[date] : [];
                 let attachHtml = '';
+                let optionsHtml = '<option value="">연결 안 함 (선택)</option>'; // 🚀 드롭다운용 빈칸 
                 
-                // 파일이 있을 때만 얇은 리스트 생성 (없으면 아무것도 안 그림!)
+                // 파일이 있을 때만 실행
                 if (files.length > 0) {
                     files.forEach((f, idx) => {
+                        // 1. 화면에 보이는 리스트 만들기
                         attachHtml += `
                             <li style="margin-bottom: 5px; display: flex; gap: 5px; align-items: center;">
                                 <a href="${f.url}" target="_blank" style="flex: 1; display: block; text-decoration: none; color: #0056b3; background: #f0f7ff; border: 1px solid #b8daff; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">
@@ -1384,11 +1373,19 @@
                                 </a>
                                 <button onclick="deleteDailyFile('${date}', ${idx})" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">삭제</button>
                             </li>`;
+                            
+                        // 🚀 2. 드롭다운 안에 들어갈 옵션들도 척척 만들기!
+                        optionsHtml += `<option value="${f.url}">${f.name}</option>`;
                     });
                 }
                 attachmentUl.innerHTML = attachHtml;
+
+                // 🚀 3. 마법의 주문: 모든 차량 입력칸의 드롭다운을 찾아서 방금 만든 목록을 촥! 쏴주기
+                document.querySelectorAll('.daily-photo-selector').forEach(select => {
+                    select.innerHTML = optionsHtml;
+                });
             }
-        }
+        } // 🚀 함수 끝!
         function renderStatusPanel(date) {
             const container = document.getElementById('status-container');
             container.innerHTML = '';
