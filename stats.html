@@ -223,9 +223,15 @@
         let viewMode = 'month'; 
 
         const allVehicles = ['1호차', '2호차', '3호차', '11호차', '12호차', '13호차', '14호차'];
-        const baseDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '조병준'];
+        // 🔥 누락되었던 기사님들 이름까지 완벽하게 통일
+        const baseDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '정한중', '조병준'];
 
-        // 🔥 탭 스위치 작동 함수
+        // 🔥 엔진용 필수 변수 추가
+        let dailyDriverStatus = {};
+        let driverListModifiers = {}; 
+        let engineModifiers = {}; 
+
+        // 탭 스위치 작동 함수
         function switchTab(tabName) {
             document.getElementById('section-driver').style.display = 'none';
             document.getElementById('section-vehicle').style.display = 'none';
@@ -251,12 +257,143 @@
             return '기타';
         }
 
+        // 🔥 엔진 도우미 함수들
+        function getDriverStatus(date, driver) {
+            if (!dailyDriverStatus[date]) return '출근'; 
+            return dailyDriverStatus[date][driver] || '출근';
+        }
+        function getEffectiveDriverList(date) {
+            const modDates = Object.keys(driverListModifiers).sort();
+            let effectiveList = [...baseDrivers];
+            for (const modDate of modDates) {
+                if (modDate <= date) effectiveList = [...driverListModifiers[modDate]];
+            }
+            return effectiveList;
+        }
+        function getEffectiveEngine(date) {
+            const modDates = Object.keys(engineModifiers).sort();
+            let isB = false;
+            for (const modDate of modDates) {
+                if (modDate <= date) isB = engineModifiers[modDate];
+            }
+            return isB;
+        }
+
+        // 🧠 집계창에도 최신형(A/B) 배차 두뇌 이식! (단, 집계창이므로 DB 저장은 끕니다)
+        function recalculateAll() {
+            allReservations.forEach(r => r.assigned = []);
+            allReservations.sort((a, b) => {
+                if (a.startDate !== b.startDate) return new Date(a.startDate) - new Date(b.startDate);
+                
+                const engineB = getEffectiveEngine(a.startDate);
+
+                if (engineB) {
+                    const getBTypeWeight = (t) => {
+                        if (t.includes('공공') || t.includes('1박') || t.includes('2박') || t.includes('서울')) return 1; 
+                        if (t.includes('성묘')) return 2; if (t.includes('시티')) return 3; return 4;
+                    };
+                    const wA = getBTypeWeight(a.type);
+                    const wB = getBTypeWeight(b.type);
+                    if (wA !== wB) return wA - wB; 
+
+                    const getBVehWeight = (v) => {
+                        if (v === '1호차') return 1; if (v === '2호차') return 2; if (v === '3호차') return 3; if (v === '예비버스') return 4;
+                        if (v === '11호차') return 5; if (v === '12호차') return 6; if (v === '13호차') return 7; if (v === '14호차') return 8; if (v === '3818') return 9; return 99;
+                    };
+                    const vA = getBVehWeight(a.vehicle);
+                    const vB = getBVehWeight(b.vehicle);
+                    if (vA !== vB) return vA - vB;
+                    
+                    if (a.km !== b.km) return a.km - b.km;
+                    return 0;
+
+                } else {
+                    const isBusA = ['1호차', '2호차', '3호차', '예비버스'].includes(a.vehicle);
+                    const isBusB = ['1호차', '2호차', '3호차', '예비버스'].includes(b.vehicle);
+                    if (isBusA !== isBusB) return isBusA ? -1 : 1; 
+
+                    const getTypeWeight = (t, isBus) => {
+                        if (isBus) {
+                            if (t.includes('공공') || t.includes('서울')) return 1; 
+                            if (t.includes('1박')) return 2; if (t.includes('2박')) return 3;
+                            if (t.includes('성묘')) return 4; if (t.includes('나들이')) return 5;
+                            if (t.includes('시티')) return 6; return 99;
+                        } else { 
+                            if (t.includes('공공') || t.includes('서울') || t.includes('성묘')) return 1; 
+                            if (t.includes('1박')) return 2; if (t.includes('2박')) return 3;
+                            if (t.includes('나들이')) return 4; if (t.includes('시티')) return 5; return 99;
+                        }
+                    };
+                    const wA = getTypeWeight(a.type, isBusA);
+                    const wB = getTypeWeight(b.type, isBusB);
+                    if (wA !== wB) return wA - wB; 
+
+                    if (a.km !== b.km) return a.km - b.km;
+
+                    const vehWeight = (v) => {
+                        if (v === '3호차') return 1; if (v === '1호차') return 2; if (v === '2호차') return 3; if (v === '예비버스') return 4;
+                        if (v === '11호차') return 5; if (v === '12호차') return 6; if (v === '13호차') return 7; if (v === '14호차') return 8; if (v === '3818') return 9; return 99;
+                    };
+                    return vehWeight(a.vehicle) - vehWeight(b.vehicle); 
+                }
+            });
+
+            let pointer = 0; let lastProcessedDate = null; let currentList = [...baseDrivers];
+
+            allReservations.forEach(res => {
+                if (res.startDate !== lastProcessedDate) {
+                    lastProcessedDate = res.startDate;
+                    currentList = getEffectiveDriverList(res.startDate);
+                    if (currentList.length > 0) pointer = pointer % currentList.length; 
+                }
+
+                if (res.isManual && res.manualDrivers && res.manualDrivers.length > 0) {
+                    res.assigned = [...res.manualDrivers];
+                } else {
+                    let loopGuard = 0;
+                    while (res.assigned.length < res.reqCount && loopGuard < 50 && currentList.length > 0) {
+                        const candidate = currentList[pointer];
+                        let isWorkingAllDays = true;
+                        for (let d of res.dates) {
+                            if (getDriverStatus(d, candidate) === '휴무') { isWorkingAllDays = false; break; }
+                        }
+                        let isOverlapping = false;
+                        for (let other of allReservations) {
+                            if (other.id !== res.id && other.assigned.includes(candidate)) {
+                                if (res.dates.some(d => other.dates.includes(d))) { isOverlapping = true; break; }
+                            }
+                        }
+                        if (isWorkingAllDays && !isOverlapping) res.assigned.push(candidate);
+                        pointer = (pointer + 1) % currentList.length;
+                        loopGuard++;
+                    }
+                }
+                if (res.nextPointerDriver && currentList.includes(res.nextPointerDriver)) {
+                    pointer = currentList.indexOf(res.nextPointerDriver);
+                }
+            });
+        }
+
+        // 🔥 엔진 구동에 필요한 데이터까지 전부 가져오게 업그레이드!
         async function loadData() {
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
                 const snap = await db.collection('reservations').get();
-                allReservations = snap.docs.map(doc => doc.data());
-                processStats();
+                allReservations = snap.docs.map(doc => { const d = doc.data(); d.id = doc.id; return d; });
+
+                const statSnap = await db.collection('daily_status').get();
+                dailyDriverStatus = {};
+                statSnap.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
+
+                const modSnap = await db.collection('driver_modifiers').get();
+                driverListModifiers = {}; engineModifiers = {}; 
+                modSnap.forEach(doc => { 
+                    driverListModifiers[doc.id] = doc.data().list; 
+                    engineModifiers[doc.id] = doc.data().useEngineB || false; 
+                });
+
+                recalculateAll(); // 가져온 데이터로 최신형 배차 한번 쫙 돌림!
+                processStats();   // 그 결과로 집계!
             } catch (error) {
                 alert("데이터를 불러오는데 실패했습니다.");
             }
@@ -292,18 +429,19 @@
                 ? `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}` 
                 : `${currentYear}`;
             
+            // 배차 건수 카운트용 (예약 시작일 기준)
             const targetRes = allReservations.filter(r => r.startDate && r.startDate.startsWith(timePrefix));
 
             let t_tot=0, t_pub=0, t_stay1=0, t_stay2=0, t_city=0, t_grave=0, t_seoul=0, t_outing=0, t_etc=0, t_cancel=0;
             let vStats = {}; allVehicles.forEach(v => vStats[v] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0});
             
-            // 🔥 운전원별 통계 주머니에 overtime(시간)과 allowance(일비) 추가!
             let dStats = {}; 
             baseDrivers.forEach(d => dStats[d] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0, overtime:0, allowance:0});
             
             let startCounts = {};
             let endCounts = {};
 
+            // 1. 기본 건수 및 차량, 기사 배차 횟수 계산
             targetRes.forEach(r => {
                 const typeStr = getShortType(r.type);
                 const isCanceled = r.isCanceled || false;
@@ -315,7 +453,7 @@
                 if (isCanceled) {
                     t_cancel++;
                     if (v && vStats[v]) vStats[v].cancel++;
-                    drivers.forEach(d => { if(d !== '미지정') dStats[d].cancel++; });
+                    drivers.forEach(d => { if(d !== '미지정' && dStats[d]) dStats[d].cancel++; });
                 } else {
                     t_tot++;
                     
@@ -342,27 +480,33 @@
                     }
 
                     drivers.forEach(d => {
-                        if(d !== '미지정') {
+                        if(d !== '미지정' && dStats[d]) {
                             dStats[d].tot++;
-                            
                             if(typeStr==='공공') dStats[d].pub++; else if(typeStr==='1박') dStats[d].stay1++; 
                             else if(typeStr==='2박') dStats[d].stay2++; else if(typeStr==='시티') dStats[d].city++; 
                             else if(typeStr==='성묘') dStats[d].grave++; 
                             else if(typeStr==='서울') dStats[d].seoul++; else if(typeStr==='나들이') dStats[d].outing++; 
                             else dStats[d].etc++;
-
-                            // 🔥 정산 내역 합산 (보상시간, 일비)
-                            if (r.settlement && r.settlement[d]) {
-                                (r.dates || []).forEach(date => {
-                                    if (date.startsWith(timePrefix) && r.settlement[d][date]) {
-                                        dStats[d].overtime += Number(r.settlement[d][date].overtime || 0);
-                                        dStats[d].allowance += Number(r.settlement[d][date].allowance || 0);
-                                    }
-                                });
-                            }
                         }
                     });
                 }
+            });
+
+            // 🔥 [버그 완벽 해결] 정산액은 '예약 시작일'에 묶이지 않고, 실제 일한 날짜(해당 월)를 기준으로 싹싹 긁어오게 바꿈!
+            allReservations.forEach(r => {
+                if (r.isCanceled) return;
+                let drivers = r.assigned || [];
+                drivers.forEach(d => {
+                    if (d !== '미지정' && dStats[d] && r.settlement && r.settlement[d]) {
+                        Object.keys(r.settlement[d]).forEach(dateStr => {
+                            // 현재 보고 있는 달(timePrefix)에 해당하는 정산 내역만 골라서 무조건 합산!
+                            if (dateStr.startsWith(timePrefix)) {
+                                dStats[d].overtime += Number(r.settlement[d][dateStr].overtime || 0);
+                                dStats[d].allowance += Number(r.settlement[d][dateStr].allowance || 0);
+                            }
+                        });
+                    }
+                });
             });
 
             document.getElementById('s-total').innerText = t_tot;
@@ -398,14 +542,12 @@
                     <td>${s.pub}</td><td>${s.stay1}</td><td>${s.stay2}</td>
                     <td>${s.city}</td><td>${s.grave}</td><td>${s.seoul}</td><td>${s.outing}</td>
                     <td>${s.etc}</td><td class="cancel-cell" style="color:#dc3545; font-weight:bold;">${s.cancel}</td>
-                    <!-- 🔥 실제 계산된 보상시간과 일비 데이터를 맨 뒤로 이동! -->
                     <td style="color:#856404; font-weight:bold; text-align:right;">${s.overtime.toFixed(2)}</td>
                     <td style="color:#155724; font-weight:bold; text-align:right;">${s.allowance.toLocaleString()}</td>
                 </tr>`;
             });
             document.getElementById('driver-tbody').innerHTML = dHtml;
 
-            // 이미 위에서 TOP 20으로 처리하게 해두었습니다!
             const sortedStarts = Object.entries(startCounts).sort((a, b) => b[1] - a[1]).slice(0, 20);
             const sortedEnds = Object.entries(endCounts).sort((a, b) => b[1] - a[1]).slice(0, 20);
 
