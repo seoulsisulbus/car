@@ -227,14 +227,13 @@
             </div>
 
             <div class="sidebar-section">
-               <!-- 🚀 [자동 업로드 버전] 날짜별 신청서 보관함 -->
-            <div style="margin-top: 15px; margin-bottom: 20px; background: #e8f0fe; padding: 10px 12px; border-radius: 6px; border: 1px dashed #007bff;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <label style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #0056b3;">📎 이 날짜의 신청서 추가</label>
-                    <!-- 올리기 버튼 삭제! onchange를 달아서 파일 선택하면 바로 업로드 시작! -->
-                    <input type="file" id="daily-upload-file" style="font-size: 0.8rem; cursor: pointer; width: 180px;" onchange="uploadDailyFile()">
+               <!-- 🚀 [자동 업로드 버전] 날짜별 신청서 보관함 (가로 글씨 2단 배치) -->
+            <div style="margin-top: 15px; margin-bottom: 20px; background: #e8f0fe; padding: 12px; border-radius: 6px; border: 1px dashed #007bff;">
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="margin: 0; font-size: 1rem; font-weight: 800; color: #0056b3;">📎 이 날짜의 신청서 추가</label>
+                    <input type="file" id="daily-upload-file" style="font-size: 0.85rem; cursor: pointer; width: 100%; background: #fff; padding: 4px; border-radius: 4px; border: 1px solid #ccc;" onchange="uploadDailyFile()">
                 </div>
-                <div id="daily-upload-status" style="font-size: 0.85rem; color: #dc3545; font-weight: bold; margin-top: 5px; display: none;">🚀 서버에 올리는 중입니다...</div>
+                <div id="daily-upload-status" style="font-size: 0.85rem; color: #dc3545; font-weight: bold; margin-top: 8px; display: none;">🚀 서버에 올리는 중입니다...</div>
                 <ul id="daily-attachment-list" style="list-style: none; padding: 0; margin: 0;"></ul>
             </div>
                 <h3>배차 예약 정보 입력</h3>
