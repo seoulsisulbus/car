@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>배차관리 시스템 (관리자 모드)</title>
     
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -132,10 +132,21 @@
     <div id="app-container">
         <div id="loading-overlay"><div id="loading-text">서버 연결 중...</div></div>
 
+        <!-- 운전원 순번 및 엔진 설정 모달 -->
         <div id="modal-overlay" class="modal-overlay-custom">
             <div class="modal-card">
-                <h4>운전원 명단/순번 관리</h4>
+                <h4>운전원 명단 및 엔진 설정</h4>
                 <p id="modal-date-text"></p>
+                
+                <!-- B엔진 적용 스위치 -->
+                <div style="background: #e8f0fe; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #b6d4fe;">
+                    <label style="font-weight: 700; color: #0056b3; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="use-b-engine" style="width: 18px; height: 18px;">
+                        이 날짜부터 신버전(B엔진) 배차 규칙 적용
+                    </label>
+                    <p style="font-size: 0.75rem; color: #555; margin-top: 6px; margin-bottom: 0;">※ 1순위(공공/1박), 2순위(성묘), 3순위(시티) 업무별로 차례대로 분류 후, 차량 번호순(1~14호차) 직진 배차합니다.</p>
+                </div>
+
                 <ul class="edit-list" id="edit-list-ul"></ul>
                 <div class="add-box">
                     <input type="text" id="new-driver-name" placeholder="새 운전원 이름">
@@ -186,13 +197,13 @@
                 <button onclick="logout()" style="background: #dc3545; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 0.75rem;">로그아웃</button>
             </div>
         </div>
-
         <div class="dispatch-container">
             <div class="main-section">
                 <div class="card">
                     <div class="calendar-header">
-                        <span id="month-display">📅 2026년 8월</span>
+                        <span id="month-display">2026년 8월</span>
                         <div>
+                            <button id="btn-memo" onclick="handleMemo()" style="background:#ffc107; color:#000; border:1px solid #e0a800; border-radius:4px; padding:3px 6px; margin-right:4px; font-weight:bold; font-size:0.75rem; cursor:pointer; display:none;">공지/메모</button>
                             <button onclick="changeMonth(-1)">&lt;</button>
                             <button onclick="changeMonth(1)">&gt;</button>
                         </div>
@@ -216,17 +227,30 @@
             </div>
 
             <div class="sidebar-section">
+               <!-- 🚀 [초슬림 버전] 날짜별 신청서 한 줄 텍스트 & 버튼 -->
+            <div style="margin-top: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 6px;">
+                    <div style="font-size: 1.05rem; font-weight: 800; color: #333;">📎 날짜별 신청서</div>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <input type="file" id="daily-upload-file" style="font-size: 0.8rem; width: 170px;">
+                        <button onclick="uploadDailyFile()" style="background: #28a745; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">올리기</button>
+                    </div>
+                </div>
+                <div id="daily-upload-status" style="font-size: 0.8rem; color: #007bff; font-weight: bold; margin-top: 5px; display: none;">업로드 중입니다...</div>
+                <!-- 파일이 없을 때는 높이가 0으로 싹 숨음 -->
+                <ul id="daily-attachment-list" style="list-style: none; padding: 0; margin: 0; margin-top: 8px;"></ul>
+            </div>
                 <h3>배차 예약 정보 입력</h3>
                 <script>
-                    const busList = ['1호차', '2호차', '3호차'];
-                    const solatiList = ['11호차', '12호차', '13호차', '14호차'];
-                    const _baseDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '조병준'];
+                    const busList = ['1호차', '2호차', '3호차', '예비버스'];
+                    const solatiList = ['11호차', '12호차', '13호차', '14호차', '3818'];
+                    const _baseDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '정한중', '조병준'];
                     
                     const formTemplate = (v, isBus) => `
                         <div class="vehicle-item">
                             <div class="vehicle-header">
                                 <input type="checkbox" id="v_${v}" onclick="toggleVehicleForm('${v}', this, ${isBus})">
-                                <label for="v_${v}" style="cursor: pointer; flex: 1;">${v} (${isBus ? '버스' : '쏠라티'})</label>
+                                <label for="v_${v}" style="cursor: pointer; flex: 1;">${v} (${v === '3818' ? '스타리아' : (isBus ? '버스' : '쏠라티')})</label>
                             </div>
                             <div class="vehicle-body" id="form_${v}">
                                 <div style="display: flex; gap: 4px; margin-bottom: 15px; border-bottom: 1px dashed #ccc; padding-bottom: 12px;">
@@ -252,11 +276,11 @@
                                 <div style="display: flex; gap: 10px; margin-bottom: 12px;">
                                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                                         <label>출발지</label>
-                                        <input type="text" id="start_${v}" autocomplete="off" oninput="this.setAttribute('list', this.value ? 'start-place-list' : '')">
+                                        <input type="text" id="start_${v}" autocomplete="off" list="start-place-list">
                                     </div>
                                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
                                         <label>도착지</label>
-                                        <input type="text" id="end_${v}" autocomplete="off" oninput="this.setAttribute('list', this.value ? 'end-place-list' : '')">
+                                        <input type="text" id="end_${v}" autocomplete="off" list="end-place-list">
                                     </div>
                                 </div>
 
@@ -346,6 +370,7 @@
             '강철규': { role: 'driver', pw: '123456' },
             '이상헌': { role: 'driver', pw: '123456' },
             '함동한': { role: 'driver', pw: '123456' },
+            '정한중': { role: 'driver', pw: '123456' },
             '조병준': { role: 'driver', pw: '123456' }
         };
 
@@ -368,19 +393,21 @@
             return koreaHolidays[`${year}-${mmdd}`] || koreaHolidays[mmdd] || null;
         }
 
-        const defaultDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '조병준'];
+        const defaultDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '정한중', '조병준'];
         let driverListModifiers = {}; 
+        let engineModifiers = {}; // 🚀 B엔진 상태 저장용 변수 추가
         
         const _now = new Date();
         let currentYear = _now.getFullYear(); 
         let currentMonth = _now.getMonth(); 
         let currentDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`; 
         
-        const dailyDriverStatus = {}; 
-        let allReservations = []; 
+        let dailyDriverStatus = {}; 
+        let allReservations = [];
+        let dailyMemos = {}; 
+        let dailyAttachments = {}; // 🚀 날짜별 신청서 보관함 바구니
         let currentUser = '';
 
-        // UI 로딩 함수
         function showLoading(msg = '서버 처리 중...') {
             document.getElementById('loading-text').innerText = msg;
             document.getElementById('loading-overlay').style.display = 'flex';
@@ -389,7 +416,6 @@
             document.getElementById('loading-overlay').style.display = 'none';
         }
 
-        // 로그인 로직
         async function handleLogin() {
             const id = document.getElementById('login-id').value.trim();
             const pw = document.getElementById('login-pw').value;
@@ -496,11 +522,34 @@
             return effectiveList;
         }
 
+        // 🚀 B엔진 상태 가져오는 도우미 함수 추가
+        function getEffectiveEngine(date) {
+            const modDates = Object.keys(engineModifiers).sort();
+            let isB = false; // 기본은 과거 A엔진
+            for (const modDate of modDates) {
+                if (modDate <= date) isB = engineModifiers[modDate];
+            }
+            return isB;
+        }
+
         function updateDropdownOptions(date) {
             const activeDrivers = getEffectiveDriverList(date);
-            const optionsHtml = activeDrivers.map(d => `<option value="${d}">${d}</option>`).join('');
+            // 🚀 전체 멤버(defaultDrivers) 중에서 현재 순번(activeDrivers)에 없는 사람만 '예비 멤버'로 분류!
+            const reserveDrivers = defaultDrivers.filter(d => !activeDrivers.includes(d));
+
+            // 1. 현재 순번 그룹
+            let optionsHtml = `<optgroup label="[현재 순번 멤버]">`;
+            optionsHtml += activeDrivers.map(d => `<option value="${d}">${d}</option>`).join('');
+            optionsHtml += `</optgroup>`;
+
+            // 2. 예비 멤버 그룹 (순번에서 제외된 사람들)
+            if (reserveDrivers.length > 0) {
+                optionsHtml += `<optgroup label="[예비 / 제외 멤버]">`;
+                optionsHtml += reserveDrivers.map(d => `<option value="${d}">${d}</option>`).join('');
+                optionsHtml += `</optgroup>`;
+            }
             
-            const allVehicles = ['1호차', '2호차', '3호차', '11호차', '12호차', '13호차', '14호차'];
+            const allVehicles = ['1호차', '2호차', '3호차', '예비버스', '11호차', '12호차', '13호차', '14호차', '3818'];
             allVehicles.forEach(v => {
                 const d1 = document.getElementById(`driver1_${v}`);
                 const d2 = document.getElementById(`driver2_${v}`);
@@ -509,28 +558,34 @@
                 if (d1) {
                     const old1 = d1.value;
                     d1.innerHTML = `<option value="">자동 배정</option><option value="미지정">미지정</option>` + optionsHtml;
-                    if (activeDrivers.includes(old1) || old1 === '미지정' || old1 === '') d1.value = old1;
+                    // 예비 멤버도 선택 유지되도록 defaultDrivers로 체크 범위 확장
+                    if (defaultDrivers.includes(old1) || old1 === '미지정' || old1 === '') d1.value = old1;
                     else d1.value = '';
                 }
                 if (d2) {
                     const old2 = d2.value;
                     d2.innerHTML = `<option value="">자동 배정</option><option value="미지정">미지정</option>` + optionsHtml;
-                    if (activeDrivers.includes(old2) || old2 === '미지정' || old2 === '') d2.value = old2;
+                    if (defaultDrivers.includes(old2) || old2 === '미지정' || old2 === '') d2.value = old2;
                     else d2.value = '';
                 }
                 if (np) {
                     const oldNp = np.value;
                     np.innerHTML = `<option value="">자동 유지 (지정 안함)</option>` + optionsHtml;
-                    if (activeDrivers.includes(oldNp) || oldNp === '') np.value = oldNp;
+                    if (defaultDrivers.includes(oldNp) || oldNp === '') np.value = oldNp;
                     else np.value = '';
                 }
             });
         }
 
         async function cleanUpOldFiles(reservations) {
-            const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+            // 🚀 기준일을 오늘이 아닌 '2일 전'으로 계산합니다.
+            const limitDate = new Date(_now);
+            limitDate.setDate(limitDate.getDate() - 2);
+            const limitStr = `${limitDate.getFullYear()}-${String(limitDate.getMonth() + 1).padStart(2, '0')}-${String(limitDate.getDate()).padStart(2, '0')}`;
+            
             for (let r of reservations) {
-                if (r.startDate < todayStr && r.photoUrl) {
+                // 시작일이 '2일 전'보다 더 과거일 때만 파일을 삭제!
+                if (r.startDate < limitStr && r.photoUrl) {
                     try {
                         const fileRef = storage.refFromURL(r.photoUrl);
                         await fileRef.delete();
@@ -541,17 +596,38 @@
             }
         }
 
+        // 🚀 메모 작성/수정/삭제 기능 (관리자 전용 자물쇠)
+        async function handleMemo() {
+            if (localStorage.getItem('userRole') !== 'admin') {
+                return alert('관리자만 공지/메모를 작성할 수 있습니다.');
+            }
+            if (!currentDate) return;
+            const currentMemo = dailyMemos[currentDate] || '';
+            const newMemo = prompt(`[${currentDate}] 기사님들께 전달할 공지/메모를 입력하세요.\n(※ 내용을 모두 지우고 확인을 누르면 삭제됩니다.)`, currentMemo);
+            
+            if (newMemo === null) return; // 취소 누름
+            
+            showLoading('메모 저장 중...');
+            try {
+                if (newMemo.trim() === '') {
+                    await db.collection('daily_memos').doc(currentDate).delete();
+                } else {
+                    await db.collection('daily_memos').doc(currentDate).set({ text: newMemo.trim() });
+                }
+            } catch (e) { alert('메모 저장 실패'); }
+            hideLoading();
+        }
+
         async function loadFromFirebase() {
             showLoading('데이터 불러오는 중...');
             try {
-                const resSnapshot = await db.collection('reservations').get();
+                const resSnap = await db.collection('reservations').get();
                 allReservations = [];
-                resSnapshot.forEach(doc => allReservations.push(doc.data()));
+                resSnap.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
 
-                await cleanUpOldFiles(allReservations);
-                
-                const startSet = new Set();
-                const endSet = new Set();
+                if (typeof cleanUpOldFiles === 'function') await cleanUpOldFiles(allReservations);
+
+                const startSet = new Set(), endSet = new Set();
                 allReservations.forEach(r => {
                     if (r.start && r.start.trim() !== '미상' && r.start.trim() !== '미입력') startSet.add(r.start.trim());
                     if (r.end && r.end.trim() !== '미상' && r.end.trim() !== '미입력') endSet.add(r.end.trim());
@@ -562,31 +638,78 @@
                 if (startList) startList.innerHTML = [...startSet].map(val => `<option value="${val}">`).join('');
                 if (endList) endList.innerHTML = [...endSet].map(val => `<option value="${val}">`).join('');
 
-                const statusSnapshot = await db.collection('daily_status').get();
-                statusSnapshot.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
+                const statSnap = await db.collection('daily_status').get();
+                dailyDriverStatus = {};
+                statSnap.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
 
-                const modSnapshot = await db.collection('driver_modifiers').get();
-                modSnapshot.forEach(doc => { driverListModifiers[doc.id] = doc.data().list; });
-            } catch (error) {
-                console.warn("DB 읽기 실패.");
-            } finally {
+                const modSnap = await db.collection('driver_modifiers').get();
+                modSnap.forEach(doc => { 
+                    driverListModifiers[doc.id] = doc.data().list; 
+                    if (typeof engineModifiers !== 'undefined') engineModifiers[doc.id] = doc.data().useEngineB || false; 
+                });
+
+                // 🚀 메모 데이터 1차 로딩
+                const memoSnap = await db.collection('daily_memos').get();
+                dailyMemos = {};
+                memoSnap.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
+
                 recalculateAll(false); 
-                updateDropdownOptions(currentDate); 
-                hideLoading(); 
-            }
-        }
+                if (currentDate) selectDate(currentDate); 
 
+                // --- 실시간 CCTV 감시 구역 ---
+                db.collection('reservations').onSnapshot(snapshot => {
+                    allReservations = [];
+                    snapshot.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
+                    recalculateAll(false); if (currentDate) selectDate(currentDate);
+                });
+
+                db.collection('daily_status').onSnapshot(snapshot => {
+                    dailyDriverStatus = {};
+                    snapshot.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
+                    recalculateAll(false); if (currentDate) selectDate(currentDate);
+                });
+
+                db.collection('driver_modifiers').onSnapshot(snapshot => {
+                    driverListModifiers = {};
+                    if (typeof engineModifiers !== 'undefined') engineModifiers = {}; 
+                    snapshot.forEach(doc => { 
+                        driverListModifiers[doc.id] = doc.data().list; 
+                        if (typeof engineModifiers !== 'undefined') engineModifiers[doc.id] = doc.data().useEngineB || false;
+                    });
+                    recalculateAll(false); if (currentDate) selectDate(currentDate);
+                });
+
+                // (기존 코드) 메모 실시간 업데이트 감시
+                db.collection('daily_memos').onSnapshot(snapshot => {
+                    dailyMemos = {};
+                    snapshot.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
+                    renderCalendar(); // 🚀 [추가됨] 달력도 클릭 없이 실시간으로 바로 새로고침!
+                    if (currentDate) renderDispatchResult(currentDate); 
+                });
+
+                // 🚀 [여기에 추가!] 신청서 보관함 실시간 감시
+                db.collection('daily_attachments').onSnapshot(snapshot => {
+                    dailyAttachments = {};
+                    snapshot.forEach(doc => { dailyAttachments[doc.id] = doc.data().files || []; });
+                    if (currentDate) renderDispatchResult(currentDate); 
+                });
+
+            } catch (error) { console.warn("DB 읽기 실패.", error); } finally { hideLoading(); }
+        }
         let tempEditList = [];
         function openDriverEditModal() {
             tempEditList = [...getEffectiveDriverList(currentDate)];
-            document.getElementById('modal-date-text').innerText = `※ 이 명단은 [${currentDate}] 이후의 배차부터 영구 적용되며, 이전 날짜의 기록은 절대 변경되지 않습니다.`;
+            document.getElementById('modal-date-text').innerText = `※ 이 명단과 엔진 설정은 [${currentDate}] 이후부터 영구 적용되며, 이전 날짜는 절대 변경되지 않습니다.`;
+            document.getElementById('use-b-engine').checked = getEffectiveEngine(currentDate); // 🚀 모달 열 때 스위치 상태 불러오기
             renderDriverEditList();
             document.getElementById('modal-overlay').style.display = 'flex';
         }
+        
         function closeDriverModal() {
             document.getElementById('modal-overlay').style.display = 'none';
             document.getElementById('new-driver-name').value = '';
         }
+        
         function renderDriverEditList() {
             const ul = document.getElementById('edit-list-ul');
             ul.innerHTML = '';
@@ -602,20 +725,32 @@
                     </li>`;
             });
         }
+        
         function moveDriver(idx, dir) {
             if(idx + dir < 0 || idx + dir >= tempEditList.length) return;
             const temp = tempEditList[idx]; tempEditList[idx] = tempEditList[idx+dir]; tempEditList[idx+dir] = temp;
             renderDriverEditList();
         }
+        
         function removeDriver(idx) { tempEditList.splice(idx, 1); renderDriverEditList(); }
+        
         function addDriverToList() {
             const name = document.getElementById('new-driver-name').value.trim();
             if(name && !tempEditList.includes(name)) { tempEditList.push(name); document.getElementById('new-driver-name').value = ''; renderDriverEditList(); }
         }
+
         function saveDriverList() {
             if(tempEditList.length === 0) return alert("최소 1명의 운전원이 필요합니다.");
+            const isEngineB = document.getElementById('use-b-engine').checked; // 🚀 스위치 체크 여부 확인
+            
             driverListModifiers[currentDate] = [...tempEditList];
-            db.collection('driver_modifiers').doc(currentDate).set({ list: driverListModifiers[currentDate] }).catch(e=>{});
+            engineModifiers[currentDate] = isEngineB;
+            
+            db.collection('driver_modifiers').doc(currentDate).set({ 
+                list: driverListModifiers[currentDate],
+                useEngineB: isEngineB // 🚀 DB에 엔진 상태 함께 저장
+            }).catch(e=>{});
+            
             closeDriverModal(); 
             recalculateAll(true); 
             updateDropdownOptions(currentDate); 
@@ -700,7 +835,7 @@
         }
 
         function closeAllForms() {
-            const allVehicles = ['1호차', '2호차', '3호차', '11호차', '12호차', '13호차', '14호차'];
+            const allVehicles = ['1호차', '2호차', '3호차', '예비버스', '11호차', '12호차', '13호차', '14호차', '3818'];
             allVehicles.forEach(v => {
                 const chk = document.getElementById(`v_${v}`);
                 const form = document.getElementById(`form_${v}`);
@@ -728,38 +863,64 @@
 
         function recalculateAll(shouldSaveToDB = true) {
             const originalStateString = JSON.stringify(allReservations);
-
             allReservations.forEach(r => r.assigned = []);
+            
             allReservations.sort((a, b) => {
                 if (a.startDate !== b.startDate) return new Date(a.startDate) - new Date(b.startDate);
                 
-                const isBusA = ['1호차', '2호차', '3호차'].includes(a.vehicle);
-                const isBusB = ['1호차', '2호차', '3호차'].includes(b.vehicle);
-                if (isBusA !== isBusB) return isBusA ? -1 : 1; 
+                const engineB = getEffectiveEngine(a.startDate);
 
-                const getTypeWeight = (t, isBus) => {
-                    if (isBus) {
-                        if (t.includes('공공') || t.includes('서울')) return 1; 
-                        if (t.includes('1박')) return 2; if (t.includes('2박')) return 3;
-                        if (t.includes('성묘')) return 4; if (t.includes('나들이')) return 5;
-                        if (t.includes('시티')) return 6; return 99;
-                    } else { 
-                        if (t.includes('공공') || t.includes('서울') || t.includes('성묘')) return 1; 
-                        if (t.includes('1박')) return 2; if (t.includes('2박')) return 3;
-                        if (t.includes('나들이')) return 4; if (t.includes('시티')) return 5; return 99;
-                    }
-                };
-                const wA = getTypeWeight(a.type, isBusA);
-                const wB = getTypeWeight(b.type, isBusB);
-                if (wA !== wB) return wA - wB; 
+                if (engineB) {
+                    const getBTypeWeight = (t) => {
+                        if (t.includes('공공') || t.includes('1박') || t.includes('2박') || t.includes('서울')) return 1; 
+                        if (t.includes('성묘')) return 2;
+                        if (t.includes('시티')) return 3;
+                        return 4;
+                    };
+                    const wA = getBTypeWeight(a.type);
+                    const wB = getBTypeWeight(b.type);
+                    if (wA !== wB) return wA - wB; 
 
-                if (a.km !== b.km) return a.km - b.km;
+                    const getBVehWeight = (v) => {
+                        if (v === '1호차') return 1; if (v === '2호차') return 2; if (v === '3호차') return 3; if (v === '예비버스') return 4;
+                        if (v === '11호차') return 5; if (v === '12호차') return 6; if (v === '13호차') return 7; if (v === '14호차') return 8; if (v === '3818') return 9; return 99;
+                    };
+                    const vA = getBVehWeight(a.vehicle);
+                    const vB = getBVehWeight(b.vehicle);
+                    if (vA !== vB) return vA - vB;
+                    
+                    if (a.km !== b.km) return a.km - b.km;
+                    return 0;
 
-                const vehWeight = (v) => {
-                    if (v === '3호차') return 1; if (v === '1호차') return 2; if (v === '2호차') return 3;
-                    if (v === '11호차') return 4; if (v === '12호차') return 5; if (v === '13호차') return 6; if (v === '14호차') return 7; return 99;
-                };
-                return vehWeight(a.vehicle) - vehWeight(b.vehicle); 
+                } else {
+                    const isBusA = ['1호차', '2호차', '3호차', '예비버스'].includes(a.vehicle);
+                    const isBusB = ['1호차', '2호차', '3호차', '예비버스'].includes(b.vehicle);
+                    if (isBusA !== isBusB) return isBusA ? -1 : 1; 
+
+                    const getTypeWeight = (t, isBus) => {
+                        if (isBus) {
+                            if (t.includes('공공') || t.includes('서울')) return 1; 
+                            if (t.includes('1박')) return 2; if (t.includes('2박')) return 3;
+                            if (t.includes('성묘')) return 4; if (t.includes('나들이')) return 5;
+                            if (t.includes('시티')) return 6; return 99;
+                        } else { 
+                            if (t.includes('공공') || t.includes('서울') || t.includes('성묘')) return 1; 
+                            if (t.includes('1박')) return 2; if (t.includes('2박')) return 3;
+                            if (t.includes('나들이')) return 4; if (t.includes('시티')) return 5; return 99;
+                        }
+                    };
+                    const wA = getTypeWeight(a.type, isBusA);
+                    const wB = getTypeWeight(b.type, isBusB);
+                    if (wA !== wB) return wA - wB; 
+
+                    if (a.km !== b.km) return a.km - b.km;
+
+                    const vehWeight = (v) => {
+                        if (v === '3호차') return 1; if (v === '1호차') return 2; if (v === '2호차') return 3; if (v === '예비버스') return 4;
+                        if (v === '11호차') return 5; if (v === '12호차') return 6; if (v === '13호차') return 7; if (v === '14호차') return 8; if (v === '3818') return 9; return 99;
+                    };
+                    return vehWeight(a.vehicle) - vehWeight(b.vehicle); 
+                }
             });
 
             let pointer = 0; let lastProcessedDate = null; let currentList = [...defaultDrivers];
@@ -1015,6 +1176,16 @@
             
             let tagsHTML = '';
 
+            // 🚀 [수정됨] 달력 칸 메모: 다른 배차처럼 통일감 있는 배지 스타일 (빨간 글씨)
+            // 🚀 [수정됨] 달력 칸 메모: 연핑크 바탕 + 찐핑크 글씨 + 빨간색 배지
+            if (typeof dailyMemos !== 'undefined' && dailyMemos[date]) {
+                tagsHTML += `
+                    <div class="event-box" style="background-color: #fce4ec; border: 1px solid #f8bbd0; width: 100%; max-width: 100%; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 4px; margin-bottom: 3px; border-radius: 4px;" title="${dailyMemos[date]}">
+                        <span class="badge" style="background-color: transparent; color: #dc3545; border: 1px solid #dc3545;">메모</span>
+                        <span style="color: #d81b60; font-weight: 800; margin-left: 4px;">${dailyMemos[date]}</span>
+                    </div>`;
+            }
+
             activeReservations.forEach(d => {
                 let shortTypeStr = getShortType(d.type);
                 let boxClass = 'default'; let badgeClass = 'default';
@@ -1087,13 +1258,14 @@
 
             const imgContainer = document.getElementById('detail-modal-img-container');
             
-            const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+            const limitDate = new Date();
+            limitDate.setDate(limitDate.getDate() - 2);
+            const limitStr = `${limitDate.getFullYear()}-${String(limitDate.getMonth() + 1).padStart(2, '0')}-${String(limitDate.getDate()).padStart(2, '0')}`;
             
-            // 기사님은 메인창에 구경 왔을 때 영수증/사진 첨부 버튼을 볼 수 없게 숨김 처리
             if (userRole === 'driver') {
                 imgContainer.style.display = 'none';
             } else {
-                if (d.startDate < todayStr && !d.photoUrl) {
+                if (d.startDate < limitStr && !d.photoUrl) {
                     imgContainer.innerHTML = `<p style="color:#d9534f; font-size:0.9rem; font-weight:bold; background:#fff3cd; padding:10px; border-radius:6px;">🛡️ 보안 및 용량 관리를 위해 자동 파기된 문서입니다.</p>`;
                     imgContainer.style.display = 'block';
                 } else if (d.photoUrl) {
@@ -1127,6 +1299,16 @@
             const activeReservations = allReservations.filter(r => (r.dates || []).includes(date));
 
             let html = '';
+
+            // 🚀 기사님이 메인창에 들어오면 하단 노란 메모 박스를 눌러도 아무 반응 없게 차단!
+            if (dailyMemos[date]) {
+                const isAdmin = localStorage.getItem('userRole') === 'admin';
+                html += `
+                <li style="background-color: #fff3cd; border: 2px solid #ffeeba; margin-bottom: 12px; border-radius: 6px; padding: 15px; cursor: ${isAdmin ? 'pointer' : 'default'}; display: flex; flex-direction: column; gap: 8px;" ${isAdmin ? 'onclick="handleMemo()"' : ''}>
+                    <div><span style="background: #ffc107; color: #000; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 900;">📌 공지 및 메모</span></div>
+                    <div style="color: #004085; font-weight: 700; font-size: 1.05rem; line-height: 1.5; white-space: pre-wrap;">${dailyMemos[date]}</div>
+                </li>`;
+            }
 
             if (activeReservations.length === 0) {
                 html += `<li style="color:#666; border:none; background:transparent; padding:0 0 10px 0;">${date} 등록된 예약 내역이 없습니다.</li>`;
@@ -1185,9 +1367,29 @@
                 }
                 html += `</li>`;
             }
-
             contentUl.innerHTML = html;
-        }
+            
+            // --- 🚀 [수정됨] 날짜별 신청서 보관함 보여주기 (업로드된 파일 리스트 & 삭제 버튼) ---
+            // --- 🚀 [초슬림 수정됨] 날짜별 신청서 리스트 ---
+            const attachmentUl = document.getElementById('daily-attachment-list');
+            if (attachmentUl) {
+                const files = (typeof dailyAttachments !== 'undefined' && dailyAttachments[date]) ? dailyAttachments[date] : [];
+                let attachHtml = '';
+                
+                // 파일이 있을 때만 얇은 리스트 생성 (없으면 아무것도 안 그림!)
+                if (files.length > 0) {
+                    files.forEach((f, idx) => {
+                        attachHtml += `
+                            <li style="margin-bottom: 5px; display: flex; gap: 5px; align-items: center;">
+                                <a href="${f.url}" target="_blank" style="flex: 1; display: block; text-decoration: none; color: #0056b3; background: #f0f7ff; border: 1px solid #b8daff; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">
+                                    📎 ${f.name}
+                                </a>
+                                <button onclick="deleteDailyFile('${date}', ${idx})" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">삭제</button>
+                            </li>`;
+                    });
+                }
+                attachmentUl.innerHTML = attachHtml;
+            }
 
         function renderStatusPanel(date) {
             const container = document.getElementById('status-container');
@@ -1210,12 +1412,25 @@
 
         function selectDate(dateStr) {
             currentDate = dateStr;
+            sessionStorage.setItem('lastSelectedDate', dateStr); // 🚀 메인창에서도 클릭한 날짜 기억!
+            
             closeAllForms(); 
             renderCalendar(); 
             document.getElementById('result-title').innerText = `최종 배차 결과 (${dateStr})`;
             renderStatusPanel(dateStr); 
             renderDispatchResult(dateStr); 
             updateDropdownOptions(dateStr); 
+
+            // 🚀 모바일/태블릿 가로 스크롤 완벽 고정 및 중앙 조준 로직
+            setTimeout(() => {
+                const grid = document.getElementById('calendar-grid');
+                const selectedCell = document.querySelector('.calendar-cell.selected');
+                
+                if (grid && selectedCell) {
+                    const scrollPos = selectedCell.offsetLeft - (grid.clientWidth / 2) + (selectedCell.clientWidth / 2);
+                    grid.scrollTo({ left: scrollPos, behavior: 'smooth' });
+                }
+            }, 300);
         }
 
         function checkAuth() {
@@ -1226,13 +1441,10 @@
                 document.getElementById('login-container').style.display = 'flex';
                 document.getElementById('app-container').style.display = 'none';
             } else {
-                
-                // 🔥 기사님은 묻지도 따지지도 않고 무조건 내배차(driver.html)로 강제 이동!
-                // 단, 내배차 화면에서 '메인창' 버튼(?main=1)을 누르고 온 경우에만 통과!
                 const urlParams = new URLSearchParams(window.location.search);
                 if (userRole === 'driver' && !urlParams.has('main')) {
                     window.location.replace('driver.html');
-                    return; 
+                    return false; // 🚀 시동 꼬임 100% 방지
                 }
 
                 document.getElementById('login-container').style.display = 'none';
@@ -1246,32 +1458,116 @@
                     document.querySelector('.status-header').style.display = 'flex'; 
                     document.getElementById('status-container').style.display = 'grid'; 
                     document.getElementById('btn-go-driver').style.display = 'none';
+                    if(document.getElementById('btn-memo')) document.getElementById('btn-memo').style.display = 'inline-block'; // 🚀 메모 버튼 표시
                 } else {
                     document.querySelector('.sidebar-section').style.display = 'none'; 
                     document.querySelector('.btn-edit-drivers').style.display = 'none'; 
                     document.querySelector('.status-header').style.display = 'none'; 
                     document.getElementById('status-container').style.display = 'none'; 
                     document.getElementById('btn-go-driver').style.display = 'inline-block';
+                    if(document.getElementById('btn-memo')) document.getElementById('btn-memo').style.display = 'none'; // 🚀 기사님은 메모 버튼 완전 증발
                 }
                 
-                renderCalendar();
-                selectDate(currentDate);
-                loadFromFirebase();
+                return true;
             }
         }
 
-        // 🔥 앱 종료 방어막 추가!
-        // 🔥 뒤로가기 팝업 싹 지우고 초깔끔해진 driver.html
         window.onload = () => {
             if(checkAuth()) {
                 const _now = new Date();
                 currentYear = _now.getFullYear(); 
                 currentMonth = _now.getMonth(); 
-                currentDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`; 
+                
+                // 🚀 브라우저 뒤로가기로 돌아왔을 때, 아까 기억해둔 날짜가 있다면 그대로 달력 복구!
+                const savedDate = sessionStorage.getItem('lastSelectedDate');
+                if (savedDate) {
+                    currentDate = savedDate;
+                    const parts = savedDate.split('-');
+                    currentYear = parseInt(parts[0]);
+                    currentMonth = parseInt(parts[1]) - 1; 
+                } else {
+                    currentDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`; 
+                }
                 
                 loadFromFirebase();
             }
         };
+
+        // --- [스마트폰 뒤로가기 팝업 닫기 방어 코드 시작] ---
+        (function() {
+            const pushModalState = () => history.pushState({ isModal: true }, '', '');
+            const popModalState = () => { if (history.state && history.state.isModal) history.back(); };
+
+            const oriShowDetail = window.showDispatchDetail;
+            window.showDispatchDetail = function(e, id, d) { pushModalState(); if(oriShowDetail) oriShowDetail(e, id, d); };
+            const oriCloseDetail = window.closeDetailModal;
+            window.closeDetailModal = function() { if(oriCloseDetail) oriCloseDetail(); popModalState(); };
+
+            const oriOpenPw = window.openPwModal;
+            window.openPwModal = function() { pushModalState(); if(oriOpenPw) oriOpenPw(); };
+            const oriClosePw = window.closePwModal;
+            window.closePwModal = function() { if(oriClosePw) oriClosePw(); popModalState(); };
+
+            if(typeof window.openDriverEditModal === 'function') {
+                const oriOpenDriver = window.openDriverEditModal;
+                window.openDriverEditModal = function() { pushModalState(); oriOpenDriver(); };
+                const oriCloseDriver = window.closeDriverModal;
+                window.closeDriverModal = function() { if(oriCloseDriver) oriCloseDriver(); popModalState(); };
+            }
+
+            window.addEventListener('popstate', function() {
+                const modals = ['detail-modal-overlay', 'pw-modal-overlay', 'modal-overlay'];
+                modals.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.style.display === 'flex') el.style.display = 'none';
+                });
+            });
+        })();
+        // 🚀 날짜별 신청서 업로드 함수
+        async function uploadDailyFile() {
+            if (!currentDate) return alert('먼저 달력에서 날짜를 선택해주세요!');
+            const fileInput = document.getElementById('daily-upload-file');
+            const file = fileInput.files[0];
+            if (!file) return alert('업로드할 신청서 파일을 선택해주세요.');
+
+            const status = document.getElementById('daily-upload-status');
+            status.style.display = 'block';
+            status.innerText = '🚀 파일을 서버로 올리는 중입니다...';
+
+            try {
+                // 1. 파이어베이스 스토리지에 저장
+                const storageRef = firebase.storage().ref();
+                const fileRef = storageRef.child(`daily_docs/${currentDate}_${Date.now()}_${file.name}`);
+                await fileRef.put(file);
+                const url = await fileRef.getDownloadURL();
+
+                // 2. 파이어스토어 DB에 기록
+                const docRef = db.collection('daily_attachments').doc(currentDate);
+                const doc = await docRef.get();
+                let files = [];
+                if (doc.exists) { files = doc.data().files || []; }
+                
+                files.push({ name: file.name, url: url });
+                await docRef.set({ files: files });
+
+                status.innerText = '✅ 업로드 완료!';
+                fileInput.value = ''; // 선택된 파일 초기화
+                setTimeout(() => status.style.display = 'none', 2000);
+            } catch (error) {
+                console.error(error);
+                status.innerText = '❌ 업로드 실패. 다시 시도해주세요.';
+            }
+        }
+
+        // 🚀 날짜별 신청서 삭제 함수
+        async function deleteDailyFile(date, idx) {
+            if (!confirm('이 신청서를 정말 삭제하시겠습니까?')) return;
+            try {
+                let files = dailyAttachments[date] || [];
+                files.splice(idx, 1);
+                await db.collection('daily_attachments').doc(date).set({ files: files });
+            } catch (error) { alert('삭제 실패'); }
+        }
     </script>
 </body>
 </html>
