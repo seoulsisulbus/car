@@ -1351,6 +1351,8 @@
                         </li>`;
                 });
             }
+        
+    
 
             const statusData = dailyDriverStatus[date] || {};
             const offDrivers = Object.keys(statusData).filter(d => statusData[d] === '휴무');
@@ -1390,7 +1392,7 @@
                 }
                 attachmentUl.innerHTML = attachHtml;
             }
-
+        }
         function renderStatusPanel(date) {
             const container = document.getElementById('status-container');
             container.innerHTML = '';
