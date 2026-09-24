@@ -31,7 +31,7 @@
         .time-nav { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; font-size: 1.6rem; font-weight: 900; color: #2c3e50; }
         .time-nav button { padding: 5px 15px; font-size: 1.2rem; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 6px; }
 
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 5px; }
         .stat-card { background: #fff; padding: 4px 2px; border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-top: 4px solid #007bff; }
         .stat-card.total { border-top-color: #28a745; background: #f0fdf4; }
         .stat-card.cancel { border-top-color: #dc3545; background: #fff5f5; }
@@ -43,6 +43,7 @@
         .table-section { padding: 0; margin-bottom: 10px !important; box-shadow: none; break-inside: avoid; }
         .table-section h3 { margin-bottom: 5px; font-size: 1.1rem; color: #000; border-left: 6px solid #000; padding-left: 8px; }
             
+        /* 🔥 글씨는 키우고 칸 여백은 쫙 줄인 맞춤형 표 스타일 */
         table { width: 100%; border-collapse: collapse; border-top: 3px solid #007bff; border-bottom: 2px solid #ced4da; font-size: 1.0rem; text-align: center; background-color: #fff; }
         th, td { border: 1px solid #e2e8f0; padding: 3px 4px; white-space: nowrap; color: #333; }
         th { background-color: #f1f5f9; font-weight: bold; color: #1e293b; border-bottom: 1px solid #cbd5e1; }
@@ -55,8 +56,8 @@
             body { background-color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .header, .view-tabs, .time-nav button, .tab-buttons { display: none !important; }
             
-            /* 인쇄할 때는 두 표 모두 나란히 출력되도록 설정! */
-            #section-driver, #section-vehicle { display: block !important; margin-bottom: 20px; }
+            /* 🔥 인쇄할 때는 숨겨진 탭 상관없이 무조건 3개 구역 전부 다 출력! */
+            #section-driver, #section-vehicle, #section-loc { display: block !important; margin-bottom: 20px; }
 
             .container { margin: 0 auto; padding-top: 10px; max-width: 100%; box-shadow: none; }
             .time-nav { margin: 0 0 20px 0; font-size: 2.2rem; color: #000; border-bottom: 2px solid #000; padding-bottom: 10px; }
@@ -69,6 +70,7 @@
             .table-section { padding: 0; margin-bottom: 20px !important; box-shadow: none; break-inside: avoid; }
             .table-section h3 { margin-bottom: 10px; font-size: 1.2rem; color: #000; border-left: 6px solid #000; }
             
+            /* 🔥 인쇄용 표도 글씨 키우고 여백 쫀쫀하게! */
             table { width: 100%; border-collapse: collapse; border-top: 2px solid #333; border-bottom: 2px solid #333; font-size: 1.0rem; text-align: center; }
             th, td { border: 1px solid #e2e8f0; padding: 3px 4px; white-space: nowrap; color: #222; }
             th { background-color: #f1f5f9; font-weight: bold; color: #1e293b; border-bottom: 1px solid #cbd5e1; }
@@ -113,16 +115,17 @@
             <div class="stat-card cancel"><h4>4일전 취소</h4><div class="num" id="s-cancel">0</div></div>
         </div>
 
-        <!-- 🔥 깔끔한 2버튼 탭 체제 -->
+        <!-- 🔥 탭 스위치 버튼 구역 (그림 제거) -->
         <div class="tab-buttons" style="display: flex; gap: 8px; justify-content: center; margin: 30px 0 20px 0;">
-            <button id="btn-tab-driver" onclick="switchTab('driver')" style="flex:1; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">운전원별 집계</button>
+            <button id="btn-tab-driver" onclick="switchTab('driver')" style="flex:1; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">운전원 정산</button>
             <button id="btn-tab-vehicle" onclick="switchTab('vehicle')" style="flex:1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">차량별 집계</button>
+            <button id="btn-tab-loc" onclick="switchTab('loc')" style="flex:1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">장소별 집계</button>
         </div>
 
-        <!-- 1. 운전원 구역 -->
+        <!-- 🔥 1. 운전원 구역 (그림 제거, 보상/일비 텍스트 수정) -->
         <div id="section-driver" style="display: block;">
             <div class="table-section">
-                <h3>운전원별 집계 대장</h3>
+                <h3>운전원별 집계 및 정산 대장</h3>
                 <table>
                     <thead>
                         <tr>
@@ -137,6 +140,8 @@
                             <th>나들이</th>
                             <th>기타</th>
                             <th style="background:#fff5f5; color:#dc3545;">취소건</th>
+                            <th style="background:#fff3cd; color:#856404;">보상</th>
+                            <th style="background:#d4edda; color:#155724;">일비</th>
                         </tr>
                     </thead>
                     <tbody id="driver-tbody"></tbody>
@@ -144,10 +149,10 @@
             </div>
         </div>
 
-        <!-- 2. 차량별 구역 -->
+        <!-- 🔥 2. 차량 구역 (그림 제거) -->
         <div id="section-vehicle" style="display: none;">
             <div class="table-section">
-                <h3>차량별 집계 대장</h3>
+                <h3>차량별 집계</h3>
                 <table>
                     <thead>
                         <tr>
@@ -166,6 +171,35 @@
                     </thead>
                     <tbody id="vehicle-tbody"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- 🔥 3. 장소 구역 (그림 제거) -->
+        <div id="section-loc" style="display: none;">
+            <div class="table-section" style="margin-top: 15px; page-break-inside: avoid;">
+                <h3 style="margin-bottom: 10px;">주요 출발지 & 도착지 통계 <span style="font-size:0.85rem; color:#666; font-weight:normal;">(가장 많이 간 곳 TOP 20)</span></h3>
+                <div style="display: flex; gap: 15px;">
+                    <table style="flex: 1; border-top: 3px solid #17a2b8;">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">순위</th>
+                                <th style="background:#e0f7fa;">출발지</th>
+                                <th style="width:60px;">건수</th>
+                            </tr>
+                        </thead>
+                        <tbody id="start-loc-tbody"></tbody>
+                    </table>
+                    <table style="flex: 1; border-top: 3px solid #fd7e14;">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">순위</th>
+                                <th style="background:#fff3cd;">도착지</th>
+                                <th style="width:60px;">건수</th>
+                            </tr>
+                        </thead>
+                        <tbody id="end-loc-tbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -188,37 +222,44 @@
         let allReservations = [];
         let viewMode = 'month'; 
 
-        const allVehicles = ['1호차', '2호차', '3호차', '예비버스', '11호차', '12호차', '13호차', '14호차', '3818'];
+        const allVehicles = ['1호차', '2호차', '3호차', '11호차', '12호차', '13호차', '14호차'];
+        // 🔥 누락되었던 기사님들 이름까지 완벽하게 통일
         const baseDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '정한중', '조병준'];
 
+        // 🔥 엔진용 필수 변수 추가
         let dailyDriverStatus = {};
         let driverListModifiers = {}; 
         let engineModifiers = {}; 
 
-        // 탭 전환 기능 추가
+        // 탭 스위치 작동 함수
         function switchTab(tabName) {
             document.getElementById('section-driver').style.display = 'none';
             document.getElementById('section-vehicle').style.display = 'none';
+            document.getElementById('section-loc').style.display = 'none';
             
             document.getElementById('btn-tab-driver').style.background = '#6c757d';
             document.getElementById('btn-tab-vehicle').style.background = '#6c757d';
+            document.getElementById('btn-tab-loc').style.background = '#6c757d';
 
             document.getElementById('section-' + tabName).style.display = 'block';
             document.getElementById('btn-tab-' + tabName).style.background = '#007bff';
         }
 
-        function getShortType(type) {
+       function getShortType(type) {
             if (!type) return '기타';
             if (type.includes('공공')) return '공공';
             if (type.includes('1박')) return '1박';
             if (type.includes('2박')) return '2박';
-            if (type.includes('서울')) return '서울';
+            // 🚀 '서울'이라는 글자가 포함만 돼도 인식하던 것을, 진짜 '서울운행'일 때만 인식하게 딱 못 박음!
+            if (type === '서울운행' || type === '서울') return '서울'; 
             if (type.includes('시티')) return '시티';
             if (type.includes('성묘')) return '성묘';
             if (type.includes('나들이')) return '나들이'; 
+            // 🚀 '기타(서울)', '기타(외곽)' 모두 얌전하게 회색 [기타] 배지로 통일!
             return '기타';
         }
 
+        // 🔥 엔진 도우미 함수들
         function getDriverStatus(date, driver) {
             if (!dailyDriverStatus[date]) return '출근'; 
             return dailyDriverStatus[date][driver] || '출근';
@@ -240,6 +281,7 @@
             return isB;
         }
 
+        // 🧠 집계창에도 최신형(A/B) 배차 두뇌 이식! (단, 집계창이므로 DB 저장은 끕니다)
         function recalculateAll() {
             allReservations.forEach(r => r.assigned = []);
             allReservations.sort((a, b) => {
@@ -266,6 +308,7 @@
                     
                     if (a.km !== b.km) return a.km - b.km;
                     return 0;
+
                 } else {
                     const isBusA = ['1호차', '2호차', '3호차', '예비버스'].includes(a.vehicle);
                     const isBusB = ['1호차', '2호차', '3호차', '예비버스'].includes(b.vehicle);
@@ -333,6 +376,7 @@
             });
         }
 
+        // 🔥 엔진 구동에 필요한 데이터까지 전부 가져오게 업그레이드!
         async function loadData() {
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
@@ -350,8 +394,8 @@
                     engineModifiers[doc.id] = doc.data().useEngineB || false; 
                 });
 
-                recalculateAll(); 
-                processStats();   
+                recalculateAll(); // 가져온 데이터로 최신형 배차 한번 쫙 돌림!
+                processStats();   // 그 결과로 집계!
             } catch (error) {
                 alert("데이터를 불러오는데 실패했습니다.");
             }
@@ -387,23 +431,26 @@
                 ? `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}` 
                 : `${currentYear}`;
             
+            // 배차 건수 카운트용 (예약 시작일 기준)
             const targetRes = allReservations.filter(r => r.startDate && r.startDate.startsWith(timePrefix));
 
             let t_tot=0, t_pub=0, t_stay1=0, t_stay2=0, t_city=0, t_grave=0, t_seoul=0, t_outing=0, t_etc=0, t_cancel=0;
+            let vStats = {}; allVehicles.forEach(v => vStats[v] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0});
             
             let dStats = {}; 
-            baseDrivers.forEach(d => dStats[d] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0});
+            baseDrivers.forEach(d => dStats[d] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0, overtime:0, allowance:0});
+            
+            let startCounts = {};
+            let endCounts = {};
 
-            let vStats = {}; 
-            allVehicles.forEach(v => vStats[v] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0});
-
+            // 1. 기본 건수 및 차량, 기사 배차 횟수 계산
             targetRes.forEach(r => {
                 const typeStr = getShortType(r.type);
                 const isCanceled = r.isCanceled || false;
                 const v = r.vehicle;
                 let drivers = r.assigned || [];
 
-                drivers.forEach(d => { if(d !== '미지정' && !dStats[d]) dStats[d] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0}; });
+                drivers.forEach(d => { if(d !== '미지정' && !dStats[d]) dStats[d] = {tot:0, pub:0, stay1:0, stay2:0, city:0, grave:0, seoul:0, outing:0, etc:0, cancel:0, overtime:0, allowance:0}; });
 
                 if (isCanceled) {
                     t_cancel++;
@@ -411,6 +458,13 @@
                     drivers.forEach(d => { if(d !== '미지정' && dStats[d]) dStats[d].cancel++; });
                 } else {
                     t_tot++;
+                    
+                    if (r.start && r.start.trim() !== '' && r.start.trim() !== '미상' && r.start.trim() !== '미입력') {
+                        startCounts[r.start.trim()] = (startCounts[r.start.trim()] || 0) + 1;
+                    }
+                    if (r.end && r.end.trim() !== '' && r.end.trim() !== '미상' && r.end.trim() !== '미입력') {
+                        endCounts[r.end.trim()] = (endCounts[r.end.trim()] || 0) + 1;
+                    }
 
                     if(typeStr==='공공') t_pub++; else if(typeStr==='1박') t_stay1++; else if(typeStr==='2박') t_stay2++; 
                     else if(typeStr==='시티') t_city++; else if(typeStr==='성묘') t_grave++; 
@@ -419,6 +473,7 @@
 
                     if (v && vStats[v]) {
                         vStats[v].tot++;
+                        
                         if(typeStr==='공공') vStats[v].pub++; else if(typeStr==='1박') vStats[v].stay1++; 
                         else if(typeStr==='2박') vStats[v].stay2++; else if(typeStr==='시티') vStats[v].city++; 
                         else if(typeStr==='성묘') vStats[v].grave++; 
@@ -439,6 +494,23 @@
                 }
             });
 
+            // 🔥 [버그 완벽 해결] 정산액은 '예약 시작일'에 묶이지 않고, 실제 일한 날짜(해당 월)를 기준으로 싹싹 긁어오게 바꿈!
+            allReservations.forEach(r => {
+                if (r.isCanceled) return;
+                let drivers = r.assigned || [];
+                drivers.forEach(d => {
+                    if (d !== '미지정' && dStats[d] && r.settlement && r.settlement[d]) {
+                        Object.keys(r.settlement[d]).forEach(dateStr => {
+                            // 현재 보고 있는 달(timePrefix)에 해당하는 정산 내역만 골라서 무조건 합산!
+                            if (dateStr.startsWith(timePrefix)) {
+                                dStats[d].overtime += Number(r.settlement[d][dateStr].overtime || 0);
+                                dStats[d].allowance += Number(r.settlement[d][dateStr].allowance || 0);
+                            }
+                        });
+                    }
+                });
+            });
+
             document.getElementById('s-total').innerText = t_tot;
             document.getElementById('s-pub').innerText = t_pub;
             document.getElementById('s-stay1').innerText = t_stay1;
@@ -449,19 +521,6 @@
             document.getElementById('s-outing').innerText = t_outing; 
             document.getElementById('s-etc').innerText = t_etc;
             document.getElementById('s-cancel').innerText = t_cancel;
-
-            let dHtml = '';
-            Object.keys(dStats).sort().forEach(d => {
-                const s = dStats[d];
-                dHtml += `<tr>
-                    <td style="font-weight:bold; background:#f8f9fa;">${d}</td>
-                    <td class="highlight" style="color:#007bff; font-weight:bold;">${s.tot}</td>
-                    <td>${s.pub}</td><td>${s.stay1}</td><td>${s.stay2}</td>
-                    <td>${s.city}</td><td>${s.grave}</td><td>${s.seoul}</td><td>${s.outing}</td>
-                    <td>${s.etc}</td><td class="cancel-cell" style="color:#dc3545; font-weight:bold;">${s.cancel}</td>
-                </tr>`;
-            });
-            document.getElementById('driver-tbody').innerHTML = dHtml;
 
             let vHtml = '';
             allVehicles.forEach(v => {
@@ -475,6 +534,38 @@
                 </tr>`;
             });
             document.getElementById('vehicle-tbody').innerHTML = vHtml;
+
+            let dHtml = '';
+            Object.keys(dStats).sort().forEach(d => {
+                const s = dStats[d];
+                dHtml += `<tr>
+                    <td style="font-weight:bold; background:#f8f9fa;">${d}</td>
+                    <td class="highlight" style="color:#007bff; font-weight:bold;">${s.tot}</td>
+                    <td>${s.pub}</td><td>${s.stay1}</td><td>${s.stay2}</td>
+                    <td>${s.city}</td><td>${s.grave}</td><td>${s.seoul}</td><td>${s.outing}</td>
+                    <td>${s.etc}</td><td class="cancel-cell" style="color:#dc3545; font-weight:bold;">${s.cancel}</td>
+                    <td style="color:#856404; font-weight:bold; text-align:right;">${s.overtime.toFixed(2)}</td>
+                    <td style="color:#155724; font-weight:bold; text-align:right;">${s.allowance.toLocaleString()}</td>
+                </tr>`;
+            });
+            document.getElementById('driver-tbody').innerHTML = dHtml;
+
+            const sortedStarts = Object.entries(startCounts).sort((a, b) => b[1] - a[1]).slice(0, 20);
+            const sortedEnds = Object.entries(endCounts).sort((a, b) => b[1] - a[1]).slice(0, 20);
+
+            const renderRankRow = (arr) => {
+                if (arr.length === 0) return `<tr><td colspan="3" style="color:#888;">입력된 데이터가 없습니다.</td></tr>`;
+                return arr.map((item, idx) => `
+                    <tr>
+                        <td style="font-weight:bold; color:#777;">${idx + 1}위</td>
+                        <td style="font-weight:bold; color:#222;">${item[0]}</td>
+                        <td style="color:#007bff; font-weight:bold;">${item[1]}건</td>
+                    </tr>
+                `).join('');
+            };
+
+            document.getElementById('start-loc-tbody').innerHTML = renderRankRow(sortedStarts);
+            document.getElementById('end-loc-tbody').innerHTML = renderRankRow(sortedEnds);
         }
 
         window.onload = loadData;
