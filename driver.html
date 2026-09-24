@@ -257,12 +257,16 @@
         let dailyDriverStatus = {};
 
         function getShortType(type) {
+            if (!type) return '기타';
             if (type.includes('공공')) return '공공';
             if (type.includes('1박')) return '1박';
             if (type.includes('2박')) return '2박';
-            if (type.includes('서울')) return '서울';
+            // 🚀 '서울'이라는 글자가 포함만 돼도 인식하던 것을, 진짜 '서울운행'일 때만 인식하게 딱 못 박음!
+            if (type === '서울운행' || type === '서울') return '서울'; 
             if (type.includes('시티')) return '시티';
             if (type.includes('성묘')) return '성묘';
+            if (type.includes('나들이')) return '나들이'; 
+            // 🚀 '기타(서울)', '기타(외곽)' 모두 얌전하게 회색 [기타] 배지로 통일!
             return '기타';
         }
 
@@ -837,13 +841,14 @@
 
             overtime = Math.round(overtime * 100) / 100;
 
+            // 🚀 [수정됨] 대망의 12,500원 완벽 분리 로직!
             let allowance = 0;
             if (type.includes('1박') || type.includes('2박')) {
                 allowance = 37500;
-            } else if (type.includes('공공') || type.includes('성묘') || type.includes('기타')) {
-                allowance = 12500;
-            } else if (type.includes('서울') || type.includes('시티')) {
-                allowance = 0;
+            } else if (type.includes('공공') || type.includes('성묘') || type.includes('기타(외곽)') || type === '기타') {
+                allowance = 12500; // 🔥 외곽이나 기존 기타는 무조건 12,500원 꽂아줍니다!
+            } else if (type.includes('서울운행') || type === '서울' || type.includes('시티') || type.includes('기타(서울)')) {
+                allowance = 0; // 🔥 서울 시내는 짤없이 0원!
             }
 
             return { overtime: overtime, allowance: allowance };
@@ -988,6 +993,7 @@
             } else {
                 activeReservations.forEach(d => {
                     let shortTypeStr = getShortType(d.type);
+
                     let badgeClass = 'default';
 
                     if (shortTypeStr === '공공') badgeClass = 'pub';
