@@ -265,7 +265,9 @@
                                         <option value="나들이동행">나들이동행</option>
                                         <option value="시티투어">시티투어</option>
                                         <option value="서울운행">서울운행</option>
-                                        <option value="기타">기타</option>
+                                        <!-- 🚀 [수정] '기타'를 서울과 외곽으로 완벽 분리! -->
+                                        <option value="기타(서울)">기타(서울)</option>
+                                        <option value="기타(외곽)">기타(외곽)</option>
                                     </select>
                                 </div>
                                 
@@ -494,13 +496,17 @@
             window.location.href = 'driver.html'; 
         }
 
-        function getShortType(type) {
+       function getShortType(type) {
+            if (!type) return '기타';
             if (type.includes('공공')) return '공공';
             if (type.includes('1박')) return '1박';
             if (type.includes('2박')) return '2박';
-            if (type.includes('서울')) return '서울';
+            // 🚀 '서울'이라는 글자가 포함만 돼도 인식하던 것을, 진짜 '서울운행'일 때만 인식하게 딱 못 박음!
+            if (type === '서울운행' || type === '서울') return '서울'; 
             if (type.includes('시티')) return '시티';
             if (type.includes('성묘')) return '성묘';
+            if (type.includes('나들이')) return '나들이'; 
+            // 🚀 '기타(서울)', '기타(외곽)' 모두 얌전하게 회색 [기타] 배지로 통일!
             return '기타';
         }
 
