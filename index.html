@@ -202,8 +202,9 @@
                 <div class="card">
                     <div class="calendar-header">
                         <span id="month-display">2026년 8월</span>
-                        <div>
-                            <button id="btn-memo" onclick="handleMemo()" style="background:#ffc107; color:#000; border:1px solid #e0a800; border-radius:4px; padding:3px 6px; margin-right:4px; font-weight:bold; font-size:0.75rem; cursor:pointer; display:none;">공지/메모</button>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <!-- 🚀 넓게보기 버튼이 캘린더 옆으로 이사왔습니다! -->
+                            <button id="btn-toggle-view" onclick="toggleViewMode()" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">🖥️PC버전</button>
                             <button onclick="changeMonth(-1)">&lt;</button>
                             <button onclick="changeMonth(1)">&gt;</button>
                         </div>
@@ -214,6 +215,8 @@
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 10px;">
                         <h3 id="result-title" style="margin:0;">최종 배차 결과</h3>
+                        <!-- 🚀 공지/메모 버튼이 여기로 이사왔습니다! -->
+                        <button id="btn-memo" onclick="handleMemo()" style="background:#ffc107; color:#000; border:1px solid #e0a800; border-radius:4px; padding:4px 8px; font-weight:bold; font-size:0.8rem; cursor:pointer; display:none;">📝 공지/메모</button>
                     </div>
                     <ul id="result-content" class="result-list">
                         <li style="color:#666;">선택된 날짜의 예약 내역이 없습니다.</li>
@@ -1597,6 +1600,25 @@
                 files.splice(idx, 1);
                 await db.collection('daily_attachments').doc(date).set({ files: files });
             } catch (error) { alert('삭제 실패'); }
+        }
+        let isMobileView = true;
+        function toggleViewMode() {
+            const viewport = document.querySelector('meta[name="viewport"]');
+            const btn = document.getElementById('btn-toggle-view');
+            
+            if (isMobileView) {
+                viewport.setAttribute('content', 'width=1300, user-scalable=yes');
+                btn.innerText = '📱 폰화면 복구';
+                btn.style.background = '#ffc107';
+                btn.style.color = '#000';
+                isMobileView = false;
+            } else {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes');
+                btn.innerText = '🖥️ 넓게보기';
+                btn.style.background = '#17a2b8';
+                btn.style.color = '#fff';
+                isMobileView = true;
+            }
         }
     </script>
 </body>
