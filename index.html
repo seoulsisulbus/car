@@ -48,7 +48,21 @@
 
         .tag-container { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; flex: 1; width: 100%; }
         
-        .event-box { display: inline-flex; align-items: center; gap: 4px; width: max-content; padding: 3px 5px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; transition: all 0.2s; }
+        .event-box { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 4px; 
+            padding: 3px 5px; 
+            border-radius: 4px; 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            white-space: nowrap; 
+            transition: all 0.2s; 
+            /* 🚀 아래 3줄이 글씨 삐져나가는 걸 막아주는 핵심 코드입니다! */
+            max-width: 100%; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
         .event-box.pub { background-color: #e8f0fe; border: 1px solid #c6dafc; color: #333; } 
         .event-box.grave { background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #333; } 
         .event-box.night1 { background-color: #fff8e1; border: 1px solid #ffecb3; color: #333; } 
@@ -1607,7 +1621,7 @@
             const btn = document.getElementById('btn-toggle-view');
             
             if (isMobileView) {
-                viewport.setAttribute('content', 'width=900, user-scalable=yes');
+                viewport.setAttribute('content', 'width=1050, user-scalable=yes');
                 btn.innerText = '📱 폰화면 복구';
                 btn.style.background = '#ffc107';
                 btn.style.color = '#000';
