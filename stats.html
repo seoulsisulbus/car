@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
-    <title>배차 데이터 집계 보고서</title>
     
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -116,13 +115,13 @@
         </div>
 
         <!-- 🔥 탭 스위치 버튼 구역 (그림 제거) -->
+        <!-- 🔥 탭 스위치 버튼 구역 -->
         <div class="tab-buttons" style="display: flex; gap: 8px; justify-content: center; margin: 30px 0 20px 0;">
             <button id="btn-tab-driver" onclick="switchTab('driver')" style="flex:1; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">운전원 정산</button>
             <button id="btn-tab-vehicle" onclick="switchTab('vehicle')" style="flex:1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">차량별 집계</button>
-            <button id="btn-tab-loc" onclick="switchTab('loc')" style="flex:1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">장소별 집계</button>
         </div>
 
-        <!-- 🔥 1. 운전원 구역 (그림 제거, 보상/일비 텍스트 수정) -->
+        <!-- 🔥 1. 운전원 구역 -->
         <div id="section-driver" style="display: block;">
             <div class="table-section">
                 <h3>운전원별 집계 및 정산 대장</h3>
@@ -140,15 +139,12 @@
                             <th>나들이</th>
                             <th>기타</th>
                             <th style="background:#fff5f5; color:#dc3545;">취소건</th>
-                            <th style="background:#fff3cd; color:#856404;">보상</th>
-                            <th style="background:#d4edda; color:#155724;">일비</th>
                         </tr>
                     </thead>
                     <tbody id="driver-tbody"></tbody>
                 </table>
             </div>
         </div>
-
         <!-- 🔥 2. 차량 구역 (그림 제거) -->
         <div id="section-vehicle" style="display: none;">
             <div class="table-section">
@@ -174,36 +170,9 @@
             </div>
         </div>
 
-        <!-- 🔥 3. 장소 구역 (그림 제거) -->
-        <div id="section-loc" style="display: none;">
-            <div class="table-section" style="margin-top: 15px; page-break-inside: avoid;">
-                <h3 style="margin-bottom: 10px;">주요 출발지 & 도착지 통계 <span style="font-size:0.85rem; color:#666; font-weight:normal;">(가장 많이 간 곳 TOP 20)</span></h3>
-                <div style="display: flex; gap: 15px;">
-                    <table style="flex: 1; border-top: 3px solid #17a2b8;">
-                        <thead>
-                            <tr>
-                                <th style="width:50px;">순위</th>
-                                <th style="background:#e0f7fa;">출발지</th>
-                                <th style="width:60px;">건수</th>
-                            </tr>
-                        </thead>
-                        <tbody id="start-loc-tbody"></tbody>
-                    </table>
-                    <table style="flex: 1; border-top: 3px solid #fd7e14;">
-                        <thead>
-                            <tr>
-                                <th style="width:50px;">순위</th>
-                                <th style="background:#fff3cd;">도착지</th>
-                                <th style="width:60px;">건수</th>
-                            </tr>
-                        </thead>
-                        <tbody id="end-loc-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        
 
-    </div>
+    
 
     <script>
         const firebaseConfig = {
@@ -222,7 +191,7 @@
         let allReservations = [];
         let viewMode = 'month'; 
 
-        const allVehicles = ['1호차', '2호차', '3호차', '11호차', '12호차', '13호차', '14호차'];
+        const allVehicles = ['1호차', '2호차', '3호차','예비버스', '11호차', '12호차', '13호차', '14호차','3818'];
         // 🔥 누락되었던 기사님들 이름까지 완벽하게 통일
         const baseDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '정한중', '조병준'];
 
@@ -232,14 +201,13 @@
         let engineModifiers = {}; 
 
         // 탭 스위치 작동 함수
+        // 탭 스위치 작동 함수
         function switchTab(tabName) {
             document.getElementById('section-driver').style.display = 'none';
             document.getElementById('section-vehicle').style.display = 'none';
-            document.getElementById('section-loc').style.display = 'none';
             
             document.getElementById('btn-tab-driver').style.background = '#6c757d';
             document.getElementById('btn-tab-vehicle').style.background = '#6c757d';
-            document.getElementById('btn-tab-loc').style.background = '#6c757d';
 
             document.getElementById('section-' + tabName).style.display = 'block';
             document.getElementById('btn-tab-' + tabName).style.background = '#007bff';
@@ -544,28 +512,10 @@
                     <td>${s.pub}</td><td>${s.stay1}</td><td>${s.stay2}</td>
                     <td>${s.city}</td><td>${s.grave}</td><td>${s.seoul}</td><td>${s.outing}</td>
                     <td>${s.etc}</td><td class="cancel-cell" style="color:#dc3545; font-weight:bold;">${s.cancel}</td>
-                    <td style="color:#856404; font-weight:bold; text-align:right;">${s.overtime.toFixed(2)}</td>
-                    <td style="color:#155724; font-weight:bold; text-align:right;">${s.allowance.toLocaleString()}</td>
                 </tr>`;
             });
             document.getElementById('driver-tbody').innerHTML = dHtml;
-
-            const sortedStarts = Object.entries(startCounts).sort((a, b) => b[1] - a[1]).slice(0, 20);
-            const sortedEnds = Object.entries(endCounts).sort((a, b) => b[1] - a[1]).slice(0, 20);
-
-            const renderRankRow = (arr) => {
-                if (arr.length === 0) return `<tr><td colspan="3" style="color:#888;">입력된 데이터가 없습니다.</td></tr>`;
-                return arr.map((item, idx) => `
-                    <tr>
-                        <td style="font-weight:bold; color:#777;">${idx + 1}위</td>
-                        <td style="font-weight:bold; color:#222;">${item[0]}</td>
-                        <td style="color:#007bff; font-weight:bold;">${item[1]}건</td>
-                    </tr>
-                `).join('');
-            };
-
-            document.getElementById('start-loc-tbody').innerHTML = renderRankRow(sortedStarts);
-            document.getElementById('end-loc-tbody').innerHTML = renderRankRow(sortedEnds);
+            
         }
 
         window.onload = loadData;
