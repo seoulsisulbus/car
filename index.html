@@ -34,8 +34,8 @@
         
         .calendar-grid { 
             display: grid; 
-            /* 🚀 90px이었던 칸 넓이를 135px로 널찍하게 키워서 두 사람 이름이 다 들어가게 합니다! */
-            grid-template-columns: repeat(7, minmax(135px, 1fr)); 
+            /* 🚀 145px로 늘려서 기사님 두 분 이름이 들어갈 절대적인 공간을 확보! */
+            grid-template-columns: repeat(7, minmax(145px, 1fr)); 
             gap: 4px; 
             overflow-x: auto; 
             padding-bottom: 5px; 
@@ -64,11 +64,11 @@
         .event-box { 
             display: inline-flex; 
             align-items: center; 
-            gap: 2px; /* 간격 살짝 줄임 */
-            padding: 3px 4px; /* 여백 살짝 줄임 */
+            gap: 1px; /* 🚀 아이콘과 글자 사이 간격 1px로 초밀착 */
+            padding: 2px 2px; /* 🚀 박스 양옆 빈 공간 2px로 극단적 축소 */
             border-radius: 4px; 
-            font-size: 0.82rem; /* 글씨 크기 최적화 */
-            letter-spacing: -0.5px; /* 🚀 글자 사이 간격을 좁혀서 '박기준, 문인식'이 안 짤리게! */
+            font-size: 0.8rem; /* 글씨는 안 보이진 않게 0.8 유지 */
+            letter-spacing: -0.8px; /* 🚀 글자 사이 간격을 -0.8px로 쫙! 압축해서 모으기 */
             font-weight: 700; 
             max-width: 100%; 
             overflow: hidden; 
