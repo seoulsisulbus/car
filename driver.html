@@ -29,8 +29,8 @@
         .sidebar-section { width: 100%; max-width: 100%; flex-shrink: 0; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: fit-content; }
         .calendar-grid { 
             display: grid; 
-            /* 🚀 145px로 늘려서 기사님 두 분 이름이 들어갈 절대적인 공간을 확보! */
-            grid-template-columns: repeat(7, minmax(145px, 1fr)); 
+            /* 🚀 !important를 붙여서 폰에서도 절대 안 쪼그라들게 강제 고정! (160px로 더 넓힘) */
+            grid-template-columns: repeat(7, minmax(160px, 1fr)) !important; 
             gap: 4px; 
             overflow-x: auto; 
             padding-bottom: 5px; 
@@ -44,11 +44,14 @@
         .calendar-day-header.sat { color: #0275d8; }
 
         .calendar-cell { 
+            /* 🚀 글자 길이에 맞춰 칸이 뚱뚱해지는 현상 강제 차단! */
+            min-width: 0 !important; 
+            
             min-height: 160px; 
             background: #fff; 
             border: 1px solid #e1e4e8; 
             border-radius: 4px; 
-            padding: 4px; /* 🚀 좁혀놨던 여백을 다시 편안하게 복구 */
+            padding: 2px !important; /* 여백 꽉꽉 짜내기 */
             font-size: 1.1rem; 
             cursor: pointer; 
             display: flex; 
@@ -68,11 +71,11 @@
         .event-box { 
             display: inline-flex; 
             align-items: center; 
-            gap: 1px; /* 🚀 아이콘과 글자 사이 간격 1px로 초밀착 */
-            padding: 2px 2px; /* 🚀 박스 양옆 빈 공간 2px로 극단적 축소 */
+            gap: 1px !important; 
+            padding: 2px 2px !important; 
             border-radius: 4px; 
-            font-size: 0.8rem; /* 글씨는 안 보이진 않게 0.8 유지 */
-            letter-spacing: -0.8px; /* 🚀 글자 사이 간격을 -0.8px로 쫙! 압축해서 모으기 */
+            font-size: 0.8rem !important; 
+            letter-spacing: -0.8px !important; /* 🚀 자간 영혼까지 압축 */
             font-weight: 700; 
             max-width: 100%; 
             overflow: hidden; 
