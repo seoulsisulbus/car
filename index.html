@@ -34,7 +34,6 @@
         
         .calendar-grid { 
             display: grid; 
-            /* 🚀 145px로 늘려서 기사님 두 분 이름이 들어갈 절대적인 공간을 확보! */
             grid-template-columns: repeat(7, minmax(145px, 1fr)); 
             gap: 4px; 
             overflow-x: auto; 
@@ -45,7 +44,7 @@
             background: #fff; 
             border: 1px solid #e1e4e8; 
             border-radius: 4px; 
-            padding: 4px; /* 🚀 좁혀놨던 여백을 다시 편안하게 복구 */
+            padding: 4px; 
             font-size: 1.1rem; 
             cursor: pointer; 
             display: flex; 
@@ -64,11 +63,11 @@
         .event-box { 
             display: inline-flex; 
             align-items: center; 
-            gap: 1px; /* 🚀 아이콘과 글자 사이 간격 1px로 초밀착 */
-            padding: 2px 2px; /* 🚀 박스 양옆 빈 공간 2px로 극단적 축소 */
+            gap: 1px; 
+            padding: 2px 2px; 
             border-radius: 4px; 
-            font-size: 0.8rem; /* 글씨는 안 보이진 않게 0.8 유지 */
-            letter-spacing: -0.8px; /* 🚀 글자 사이 간격을 -0.8px로 쫙! 압축해서 모으기 */
+            font-size: 0.8rem; 
+            letter-spacing: -0.8px; 
             font-weight: 700; 
             max-width: 100%; 
             overflow: hidden; 
@@ -158,17 +157,14 @@
     <div id="app-container">
         <div id="loading-overlay"><div id="loading-text">서버 연결 중...</div></div>
 
-        <!-- 운전원 순번 및 엔진 설정 모달 -->
         <div id="modal-overlay" class="modal-overlay-custom">
             <div class="modal-card">
                 <h4>운전원 명단 및 엔진 설정</h4>
                 <p id="modal-date-text"></p>
                 
-                <!-- B엔진 적용 스위치 -->
                 <div style="background: #e8f0fe; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #b6d4fe;">
                     <label style="font-weight: 700; color: #0056b3; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" id="use-b-engine" style="width: 18px; height: 18px;">
-                        이 날짜부터 신버전(B엔진) 배차 규칙 적용
                     </label>
                     <p style="font-size: 0.75rem; color: #555; margin-top: 6px; margin-bottom: 0;">※ 1순위(공공/1박), 2순위(성묘), 3순위(시티) 업무별로 차례대로 분류 후, 차량 번호순(1~14호차) 직진 배차합니다.</p>
                 </div>
@@ -229,8 +225,8 @@
                     <div class="calendar-header">
                         <span id="month-display">2026년 8월</span>
                         <div style="display: flex; gap: 4px; align-items: center;">
-                            <!-- 🚀 넓게보기 버튼이 캘린더 옆으로 이사왔습니다! -->
-                            <button id="btn-toggle-view" onclick="toggleViewMode()" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">🖥️PC버전</button>
+                             <button onclick="window.open('maintenance.html', '_blank')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem; margin-left: 5px;">정비</button>
+                            <button id="btn-toggle-view" onclick="toggleViewMode()" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">PC버전</button>
                             <button onclick="changeMonth(-1)">&lt;</button>
                             <button onclick="changeMonth(1)">&gt;</button>
                         </div>
@@ -241,7 +237,6 @@
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 10px;">
                         <h3 id="result-title" style="margin:0;">최종 배차 결과</h3>
-                        <!-- 🚀 공지/메모 버튼이 여기로 이사왔습니다! -->
                         <button id="btn-memo" onclick="handleMemo()" style="background:#ffc107; color:#000; border:1px solid #e0a800; border-radius:4px; padding:4px 8px; font-weight:bold; font-size:0.8rem; cursor:pointer; display:none;">📝 공지/메모</button>
                     </div>
                     <ul id="result-content" class="result-list">
@@ -256,7 +251,6 @@
             </div>
 
             <div class="sidebar-section">
-               <!-- 🚀 [자동 업로드 버전] 날짜별 신청서 보관함 (가로 글씨 2단 배치) -->
             <div style="margin-top: 15px; margin-bottom: 20px; background: #e8f0fe; padding: 12px; border-radius: 6px; border: 1px dashed #007bff;">
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <label style="margin: 0; font-size: 1rem; font-weight: 800; color: #0056b3;">📎 이 날짜의 신청서 추가</label>
@@ -321,8 +315,7 @@
                                         <input type="text" id="dest_${v}">
                                     </div>
                                 </div>
-                                
-                                <!-- 🚀 [수정] 보관함에서 신청서 골라오기 (기본 빈 껍데기) -->
+                            
                                 <div class="form-group" style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #007bff; margin-top:15px;">
                                     <label style="color: #007bff; font-weight:700;">📎 신청서 연결 (보관함에서 선택)</label>
                                     <select id="photo_select_${v}" class="daily-photo-selector" style="width: 100%; padding: 6px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
@@ -424,7 +417,7 @@
 
         const defaultDrivers = ['박기준', '변석현', '이명순', '김탁', '한상훈', '문인식', '황덕일', '강철규', '이상헌', '함동한', '정한중', '조병준'];
         let driverListModifiers = {}; 
-        let engineModifiers = {}; // 🚀 B엔진 상태 저장용 변수 추가
+        let engineModifiers = {}; 
         
         const _now = new Date();
         let currentYear = _now.getFullYear(); 
@@ -434,7 +427,7 @@
         let dailyDriverStatus = {}; 
         let allReservations = [];
         let dailyMemos = {}; 
-        let dailyAttachments = {}; // 🚀 날짜별 신청서 보관함 바구니
+        let dailyAttachments = {};
         let currentUser = '';
 
         function showLoading(msg = '서버 처리 중...') {
@@ -530,12 +523,12 @@
             if (type.includes('공공')) return '공공';
             if (type.includes('1박')) return '1박';
             if (type.includes('2박')) return '2박';
-            // 🚀 '서울'이라는 글자가 포함만 돼도 인식하던 것을, 진짜 '서울운행'일 때만 인식하게 딱 못 박음!
+            
             if (type === '서울운행' || type === '서울') return '서울'; 
             if (type.includes('시티')) return '시티';
             if (type.includes('성묘')) return '성묘';
             if (type.includes('나들이')) return '나들이'; 
-            // 🚀 '기타(서울)', '기타(외곽)' 모두 얌전하게 회색 [기타] 배지로 통일!
+            
             return '기타';
         }
 
@@ -555,10 +548,10 @@
             return effectiveList;
         }
 
-        // 🚀 B엔진 상태 가져오는 도우미 함수 추가
+        
         function getEffectiveEngine(date) {
             const modDates = Object.keys(engineModifiers).sort();
-            let isB = false; // 기본은 과거 A엔진
+            let isB = false; 
             for (const modDate of modDates) {
                 if (modDate <= date) isB = engineModifiers[modDate];
             }
@@ -567,15 +560,15 @@
 
         function updateDropdownOptions(date) {
             const activeDrivers = getEffectiveDriverList(date);
-            // 🚀 전체 멤버(defaultDrivers) 중에서 현재 순번(activeDrivers)에 없는 사람만 '예비 멤버'로 분류!
+            
             const reserveDrivers = defaultDrivers.filter(d => !activeDrivers.includes(d));
 
-            // 1. 현재 순번 그룹
+            
             let optionsHtml = `<optgroup label="[현재 순번 멤버]">`;
             optionsHtml += activeDrivers.map(d => `<option value="${d}">${d}</option>`).join('');
             optionsHtml += `</optgroup>`;
 
-            // 2. 예비 멤버 그룹 (순번에서 제외된 사람들)
+           
             if (reserveDrivers.length > 0) {
                 optionsHtml += `<optgroup label="[예비 / 제외 멤버]">`;
                 optionsHtml += reserveDrivers.map(d => `<option value="${d}">${d}</option>`).join('');
@@ -591,7 +584,7 @@
                 if (d1) {
                     const old1 = d1.value;
                     d1.innerHTML = `<option value="">자동 배정</option><option value="미지정">미지정</option>` + optionsHtml;
-                    // 예비 멤버도 선택 유지되도록 defaultDrivers로 체크 범위 확장
+                    
                     if (defaultDrivers.includes(old1) || old1 === '미지정' || old1 === '') d1.value = old1;
                     else d1.value = '';
                 }
@@ -611,12 +604,12 @@
         }
 
         async function cleanUpOldFiles(reservations) {
-            // 🚀 1. 기준일 계산 ('2일 전' 날짜를 뽑아냅니다)
+           
             const limitDate = new Date(_now);
             limitDate.setDate(limitDate.getDate() - 2);
             const limitStr = `${limitDate.getFullYear()}-${String(limitDate.getMonth() + 1).padStart(2, '0')}-${String(limitDate.getDate()).padStart(2, '0')}`;
             
-            // 🚀 2. [기존] 차량 배차에 직접 첨부된 파일 지우기
+           
             for (let r of reservations) {
                 if (r.startDate < limitStr && r.photoUrl) {
                     try {
@@ -628,7 +621,7 @@
                 }
             }
 
-            // 🚀 3. [추가됨] 새로운 '날짜별 신청서 보관함' 싹 비우기
+           
             try {
                 const snapshot = await db.collection('daily_attachments').get();
                 
