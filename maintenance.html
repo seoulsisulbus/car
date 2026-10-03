@@ -13,11 +13,13 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Pretendard', sans-serif; background-color: #f4f6f9; color: #333; letter-spacing: -0.3px; padding: 15px; }
         
-        .header { background: #28a745; color: #fff; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .header h1 { font-size: 1.3rem; margin: 0; }
-        .header-btns { display: flex; gap: 8px; }
-        .btn-pc { background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-close { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .header { background: #28a745; color: #fff; padding: 15px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .header h1 { font-size: 1.25rem; margin: 0; white-space: nowrap; } /* 🚀 제목 두줄 방지 */
+        .header-btns { display: flex; gap: 5px; }
+        
+        .btn-add-top { background: #ffc107; color: #000; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } /* 🚀 상단으로 이사온 기록추가 버튼 */
+        .btn-pc { background: #17a2b8; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-close { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
         .month-nav { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; font-size: 1.6rem; font-weight: 900; color: #2c3e50; }
         .month-nav button { padding: 5px 15px; font-size: 1.2rem; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 6px; }
@@ -92,11 +94,13 @@
         <span id="loading-text">데이터 확인 중...</span>
     </div>
 
+    <!-- 🚀 상단 헤더 수정: 제목 간소화 및 기록추가 버튼 이사! -->
     <div class="header">
-        <h1>차량 정비 및 일지 대장</h1>
+        <h1>차량일지대장</h1>
         <div class="header-btns">
+            <button onclick="openModalForSelectedDate()" class="btn-add-top">+ 기록추가</button>
             <button id="btn-toggle-view" class="btn-pc" onclick="toggleViewMode()">PC버전</button>
-            <button class="btn-close" onclick="window.close()">창 닫기</button>
+            <button class="btn-close" onclick="window.close()">닫기</button>
         </div>
     </div>
 
@@ -117,9 +121,9 @@
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #28a745; padding-bottom: 10px; margin-bottom: 10px;">
+        <!-- 🚀 하단 제목 영역: 버튼 제거 완료 -->
+        <div style="border-bottom: 2px solid #28a745; padding-bottom: 10px; margin-bottom: 10px;">
             <h3 id="detail-title" style="margin:0; font-size: 1.15rem; color: #2c3e50;">기록 상세</h3>
-            <button onclick="openModalForSelectedDate()" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">+ 기록 추가</button>
         </div>
         <ul id="detail-content" class="result-list">
             <li style="color:#666; text-align:center; padding: 20px;">달력 날짜를 클릭하시면 상세 내역이 표시됩니다.</li>
@@ -211,7 +215,6 @@
                 </div>
             </div>
 
-            <!-- 🟢 [정기검사] 폼 -->
             <div id="form-inspection" style="display: none;">
                 <div class="form-group">
                     <label>검사 구분</label>
@@ -243,7 +246,7 @@
                     <input type="date" id="ip-next-date">
                 </div>
                 <div class="form-group">
-                    <label>정비 업체 (선택)</label> <!-- 🚀 통일된 드롭다운 적용! -->
+                    <label>정비 업체 (선택)</label> 
                     <select id="ip-shop">
                         <option value="">업체 선택 안함</option>
                         <option value="용현점">용현점</option>
@@ -490,7 +493,8 @@
             const dayRecords = allRecords.filter(r => r.date === dateStr);
 
             if(dayRecords.length === 0) {
-                contentUl.innerHTML = `<li style="color:#666; text-align:center; padding: 20px;">이 날짜에 등록된 차량 기록이 없습니다.<br><br>우측 상단의 <b>[+ 기록 추가]</b> 버튼을 눌러주세요.</li>`;
+                // 🚀 안내 멘트도 상단 버튼 누르라고 업데이트!
+                contentUl.innerHTML = `<li style="color:#666; text-align:center; padding: 20px;">이 날짜에 등록된 차량 기록이 없습니다.<br><br>화면 상단의 <b>[+ 기록추가]</b> 버튼을 눌러주세요.</li>`;
                 return;
             }
 
@@ -689,7 +693,11 @@
         }
 
         function openModalForSelectedDate() {
-            if(!selectedDateStr) return;
+            // 🚀 모달 열 때 선택된 날짜가 없으면 무조건 오늘 날짜로 세팅!
+            if(!selectedDateStr) {
+                const _now = new Date();
+                selectedDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+            }
             
             document.getElementById('modal-date-title').innerText = selectedDateStr + " 기록 추가";
             document.getElementById('m-date').value = selectedDateStr;
