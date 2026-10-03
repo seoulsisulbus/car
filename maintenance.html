@@ -78,11 +78,16 @@
         .btn-save { flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; }
         .btn-cancel { flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; }
         
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: 700; color: #007bff; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: 800; color: #28a745; transition: opacity 0.3s; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #28a745; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div id="loading-overlay">데이터 동기화 중...</div>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <span id="loading-text">데이터 확인 중...</span>
+    </div>
 
     <div class="header">
         <h1>차량 정비 및 일지 대장</h1>
@@ -117,13 +122,10 @@
         </ul>
     </div>
 
-    <!-- 🚀 입력 및 수정 팝업창 -->
     <div id="modal-overlay">
         <div class="modal-content">
             <div class="modal-title" id="modal-date-title">기록 추가</div>
             <input type="hidden" id="m-date">
-            
-            <!-- 🚀 수정 기능을 위해 숨겨놓은 ID 저장소 -->
             <input type="hidden" id="m-doc-id">
 
             <div class="form-group">
@@ -149,7 +151,6 @@
                 <label for="type-routine" class="routine">일지(일정비)</label>
             </div>
 
-            <!-- 🚨 [고장수리] -->
             <div id="form-breakdown" style="display: none;">
                 <div class="form-group"><label>고장 원인</label><input type="text" id="bd-cause" placeholder="예: 브레이크 밀림"></div>
                 <div class="form-group"><label>수리 부품</label><input type="text" id="bd-part" placeholder="예: 앞바퀴 라이닝"></div>
@@ -169,7 +170,6 @@
                 </div>
             </div>
 
-            <!-- 🛡️ [예방정비] -->
             <div id="form-preventive" style="display: none;">
                 <div class="form-group"><label>점검 / 정비 항목</label><input type="text" id="pv-item" placeholder="예: 엔진오일, 타이어"></div>
                 <div class="form-group">
@@ -187,13 +187,11 @@
                 </div>
             </div>
 
-            <!-- ⚠️ [특이사항(증상)] -->
             <div id="form-issue" style="display: none;">
                 <div class="form-group"><label>증상 요약</label><input type="text" id="is-title" placeholder="예: 고속 주행 시 핸들 떨림"></div>
                 <div class="form-group"><label>상세 내용 및 다음 운전자 주의사항</label><input type="text" id="is-detail" placeholder="예: 80km 이상 밟으면 진동이 심함. 배차 시 주의요망"></div>
             </div>
 
-            <!-- ✅ [일정비] -->
             <div id="form-routine">
                 <div id="issue-warning-container" class="issue-warning-box"></div>
 
@@ -225,13 +223,20 @@
 
             <div class="modal-btns">
                 <button class="btn-cancel" onclick="closeModal()">취소</button>
-                <button class="btn-save" id="btn-save-submit" onclick="saveMaintenance()">💾 클라우드 저장</button>
+                <button class="btn-save" id="btn-save-submit" onclick="saveMaintenance()">💾 저장</button>
             </div>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyCipeqfmU03bZQozFt8MdToxxuDyFIUd-g", authDomain: "park-fc66f.firebaseapp.com", projectId: "park-fc66f" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCipeqfmU03bZQozFt8MdToxxuDyFIUd-g",
+            authDomain: "park-fc66f.firebaseapp.com",
+            projectId: "park-fc66f",
+            storageBucket: "park-fc66f.firebasestorage.app",
+            messagingSenderId: "93011031366",
+            appId: "1:93011031366:web:72438cb8d71dd5a7902147"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -260,18 +265,17 @@
             return koreaHolidays[`${year}-${mmdd}`] || koreaHolidays[mmdd] || null;
         }
 
-        // 🚀 CCTV(실시간 감시) 연결을 끊을 수 있는 스위치 변수 추가
+        // 🚀 요금 방어용 CCTV 스위치
         let unsubscribeLogs = null; 
 
-        // 🚀 1. 요금 방어가 적용된 데이터 불러오기 함수
+        // 🚀 1. 요금 방어 모드: '현재 보고 있는 달력의 달' 데이터만 쏙 빼옵니다!
         function loadFromFirebase(year, month) {
+            if (unsubscribeLogs) unsubscribeLogs();
+            
+            // 파이어베이스 누락 버그를 막기 위해 해당 월의 1일~31일로 타이트하게 지정
             const startStr = `${year}-${String(month + 1).padStart(2, '0')}-01`;
             const endStr = `${year}-${String(month + 1).padStart(2, '0')}-31`;
 
-            // 다른 달로 넘어갔으면 이전 달 CCTV 전원을 끕니다! (이중 요금 방지)
-            if (unsubscribeLogs) unsubscribeLogs();
-
-            // 새로 켠 달력의 1일~31일 데이터에만 CCTV를 설치합니다.
             unsubscribeLogs = db.collection('vehicle_logs')
                 .where("date", ">=", startStr)
                 .where("date", "<=", endStr)
@@ -283,7 +287,6 @@
                         allRecords.push(d);
                     });
                     
-                    // 데이터 오면 로딩창 즉시 제거
                     const loader = document.getElementById('loading-overlay');
                     if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 300); }
 
@@ -295,19 +298,18 @@
                 });
         }
 
-        // 🚀 2. 달력을 넘길 때 작동하는 함수 (바뀐 달에 맞춰 데이터 다시 호출)
+        // 🚀 2. 달력 넘길 때: 화살표를 누르면 바뀐 달의 데이터만 다시 불러옵니다!
         function changeMonth(offset) {
             currentDate.setMonth(currentDate.getMonth() + offset);
             const newYear = currentDate.getFullYear();
             const newMonth = currentDate.getMonth();
             
-            // 달력이 넘어갈 때마다 새로운 달을 기준으로 DB를 다시 불러옵니다!
             loadFromFirebase(newYear, newMonth);
         }
 
-        // 🚀 3. 페이지 켤 때 작동 (안전 타이머 + 이번 달 데이터 호출)
+        // 🚀 3. 처음 켤 때 작동
         window.onload = () => {
-            // 로딩창 1.5초 안전 타이머 (깃허브 무한 로딩 방지)
+            // 로딩창 1.5초 안전 타이머
             setTimeout(() => {
                 const loader = document.getElementById('loading-overlay');
                 if(loader && loader.style.display !== 'none') {
@@ -322,7 +324,6 @@
             const day = String(_now.getDate()).padStart(2, '0');
             selectedDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${day}`;
             
-            // 맨 처음 페이지를 켤 때 이번 달 기준으로 불러오기!
             loadFromFirebase(year, month);
         };
 
@@ -387,11 +388,6 @@
             });
         }
 
-        function changeMonth(offset) {
-            currentDate.setMonth(currentDate.getMonth() + offset);
-            renderCalendar();
-        }
-
         function handleCellClick(dateStr) {
             selectDate(dateStr); 
             openModalForSelectedDate(); 
@@ -444,7 +440,6 @@
                     html += `<div><b style="color:#8e44ad;">증상:</b> ${r.title} ${statusBadge} <br> <b style="color:#555;">상세/주의사항:</b> ${r.detail}</div>`;
                 }
                 
-                // 🚀 삭제 & 수정 버튼 추가 (자기 글이거나 관리자면 삭제/수정 가능)
                 html += `
                     <div style="margin-top: 10px; text-align: right; border-top: 1px dashed #eee; padding-top: 8px;">
                         <button onclick="editRecord('${r.id}')" style="background:#ffc107; color:#000; border:none; padding:4px 12px; border-radius:4px; font-size:0.85rem; cursor:pointer; font-weight:bold; margin-right:5px;">수정</button>
@@ -455,25 +450,26 @@
             contentUl.innerHTML = html;
         }
 
-        // 🚀 DB에서 문서 삭제 함수
         function deleteRecord(docId) {
             if(confirm("정말 이 기록을 삭제하시겠습니까? (복구 불가능)")) {
-                db.collection('vehicle_logs').doc(docId).delete()
-                .catch(e => alert("삭제 실패: " + e));
+                // 🚀 빠른 UI 갱신
+                allRecords = allRecords.filter(r => r.id !== docId);
+                renderCalendar();
+                selectDate(selectedDateStr);
+                
+                db.collection('vehicle_logs').doc(docId).delete().catch(e => alert("삭제 실패: " + e));
             }
         }
 
-        // 🚀 DB에 저장된 문서를 수정하기 위해 팝업창 띄우는 함수
         function editRecord(docId) {
             const r = allRecords.find(x => x.id === docId);
             if(!r) return;
 
             document.getElementById('modal-date-title').innerText = r.date + " 기록 수정";
             document.getElementById('m-date').value = r.date;
-            document.getElementById('m-doc-id').value = r.id; // 🚀 기존 문서 ID 기억!
+            document.getElementById('m-doc-id').value = r.id; 
             document.getElementById('m-vehicle').value = r.vehicle;
             
-            // 라디오 버튼 모두 해제 후 다시 선택
             document.getElementById('type-breakdown').checked = false;
             document.getElementById('type-preventive').checked = false;
             document.getElementById('type-issue').checked = false;
@@ -496,7 +492,6 @@
                 document.getElementById('is-detail').value = r.detail || '';
             } else {
                 document.getElementById('type-routine').checked = true;
-                // 콤마(,) 섞어서 다시 예쁘게 불러오기
                 document.getElementById('rt-range').value = r.range ? r.range.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
                 document.getElementById('rt-total').value = r.total ? r.total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
                 document.getElementById('rt-def').value = r.def || '';
@@ -509,7 +504,7 @@
             toggleFormType();
             checkUnresolvedIssues();
             
-            document.getElementById('btn-save-submit').innerText = "📝 수정 내용 저장";
+            document.getElementById('btn-save-submit').innerText = "📝 수정 저장";
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
@@ -540,9 +535,16 @@
 
         function resolveIssue(docId) {
             if(!confirm('이 특이사항(증상)이 정비되어 완전히 해결되었습니까?')) return;
+            
+            // 🚀 빠른 UI 갱신
+            const idx = allRecords.findIndex(r => r.id === docId);
+            if(idx !== -1) allRecords[idx].isResolved = true;
+            checkUnresolvedIssues(); 
+            selectDate(selectedDateStr); 
+
             db.collection('vehicle_logs').doc(docId).update({ isResolved: true })
-            .then(() => alert('해결 완료 처리되었습니다!'))
-            .catch(e => alert('오류가 발생했습니다: ' + e));
+            .then(() => alert('해결 완료!'))
+            .catch(e => alert('오류: ' + e));
         }
 
         function openModalForSelectedDate() {
@@ -550,7 +552,7 @@
             
             document.getElementById('modal-date-title').innerText = selectedDateStr + " 기록 추가";
             document.getElementById('m-date').value = selectedDateStr;
-            document.getElementById('m-doc-id').value = ""; // 🚀 신규 등록이므로 문서 ID 빈칸으로 초기화!
+            document.getElementById('m-doc-id').value = ""; 
             
             document.getElementById('bd-cause').value = ''; document.getElementById('bd-part').value = ''; document.getElementById('bd-shop').value = '';
             document.getElementById('pv-item').value = ''; document.getElementById('pv-shop').value = '';
@@ -562,7 +564,7 @@
             toggleFormType();
             checkUnresolvedIssues(); 
             
-            document.getElementById('btn-save-submit').innerText = "💾 클라우드 저장";
+            document.getElementById('btn-save-submit').innerText = "💾 저장";
             document.getElementById('modal-overlay').style.display = 'flex'; 
         }
 
@@ -583,7 +585,7 @@
             const date = document.getElementById('m-date').value;
             const vehicle = document.getElementById('m-vehicle').value;
             const driver = currentUser; 
-            const docId = document.getElementById('m-doc-id').value; // 🚀 기존 문서 고유 ID가 있는지 확인
+            const docId = document.getElementById('m-doc-id').value; 
             
             const isBreakdown = document.getElementById('type-breakdown').checked;
             const isPreventive = document.getElementById('type-preventive').checked;
@@ -591,10 +593,7 @@
             
             let newRecord = { date: date, vehicle: vehicle, driver: driver };
 
-            // 🚀 신규 등록일 때만 날짜/시간 생성
-            if(!docId) {
-                newRecord.timestamp = firebase.firestore.FieldValue.serverTimestamp();
-            }
+            if(!docId) newRecord.timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
             if (isBreakdown) {
                 newRecord.type = '고장수리';
@@ -615,7 +614,7 @@
                 newRecord.type = '특이사항';
                 newRecord.title = document.getElementById('is-title').value;
                 newRecord.detail = document.getElementById('is-detail').value;
-                if(!docId) newRecord.isResolved = false; // 신규 등록일 때만 미해결로 세팅
+                if(!docId) newRecord.isResolved = false;
                 if(!newRecord.title) return alert("증상 요약을 입력해주세요!");
             }
             else { 
@@ -633,31 +632,30 @@
             }
             
             const btnSave = document.getElementById('btn-save-submit');
-            btnSave.innerText = "서버 기록 중...";
+            btnSave.innerText = "기록 중...";
             btnSave.disabled = true;
 
-            // 🚀 수정이면 기존 ID에 덮어쓰고(merge), 신규면 새 ID 발급!
             const targetId = docId ? docId : Date.now().toString(); 
+            newRecord.id = targetId;
+
+            // 🚀 서버 가기 전에 폰 화면에 0.01초 만에 띄워버리기!
+            const existingIdx = allRecords.findIndex(r => r.id === targetId);
+            if(existingIdx !== -1) allRecords[existingIdx] = newRecord;
+            else allRecords.push(newRecord);
+
+            renderCalendar();
+            selectDate(date);
+            closeModal(); 
             
             db.collection('vehicle_logs').doc(targetId).set(newRecord, { merge: true }).then(() => {
-                closeModal(); 
-                btnSave.innerText = "💾 클라우드 저장";
+                btnSave.innerText = "💾 저장";
                 btnSave.disabled = false;
             }).catch(e => {
                 alert("저장 실패! 다시 시도해주세요.");
-                btnSave.innerText = "💾 클라우드 저장";
+                btnSave.innerText = "💾 저장";
                 btnSave.disabled = false;
             });
         }
-
-        window.onload = () => {
-            const _now = new Date();
-            const year = _now.getFullYear(); 
-            const month = String(_now.getMonth() + 1).padStart(2, '0');
-            const day = String(_now.getDate()).padStart(2, '0');
-            selectedDateStr = `${year}-${month}-${day}`;
-            loadFromFirebase();
-        };
     </script>
 </body>
 </html>
