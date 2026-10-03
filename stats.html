@@ -117,7 +117,6 @@
             <button id="btn-tab-maintenance" onclick="switchTab('maintenance')" style="flex:1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size:1rem;">정비/수리 내역</button>
         </div>
 
-        <!-- 1. 운전원 구역 -->
         <div id="section-driver" style="display: block;">
             <div class="table-section">
                 <h3>운전원별 배차 집계 및 정산</h3>
@@ -142,7 +141,6 @@
             </div>
         </div>
         
-        <!-- 2. 차량 구역 -->
         <div id="section-vehicle" style="display: none;">
             <div class="table-section">
                 <h3>차량별 배차 집계</h3>
@@ -167,20 +165,20 @@
             </div>
         </div>
 
-        <!-- 🔥 3. 정비/수리 내역 구역 (누적KM 칼럼 추가!) -->
+        <!-- 🔥 3. 정비/수리 내역 구역 (정기검사 추가) -->
         <div id="section-maintenance" style="display: none;">
             <div class="table-section">
-                <h3>차량별 주요 정비 내역 (고장수리 및 예방정비)</h3>
+                <h3>차량별 주요 정비 내역 (고장수리, 예방정비, 정기검사)</h3>
                 <table>
                     <thead>
                         <tr>
                             <th style="width:12%;">차량번호</th>
-                            <th style="width:12%;">정비 날짜</th>
+                            <th style="width:12%;">날짜</th>
                             <th style="width:10%;">구분</th>
                             <th style="width:13%;">누적 KM</th>
-                            <th style="width:20%;">점검 / 수리 항목</th>
-                            <th style="width:20%;">조치 내용</th>
-                            <th style="width:13%;">정비업체</th>
+                            <th style="width:20%;">항목 / 검사결과</th>
+                            <th style="width:20%;">조치 / 다음검사일</th>
+                            <th style="width:13%;">정비/검사소</th>
                         </tr>
                     </thead>
                     <tbody id="maintenance-tbody"></tbody>
@@ -497,8 +495,8 @@
             });
             document.getElementById('driver-tbody').innerHTML = dHtml;
 
-            // 🔥 정비 내역 테이블 구성 (누적 KM 칼럼 포함)
-            const targetLogs = allMaintenanceLogs.filter(log => log.date && log.date.startsWith(timePrefix) && (log.type === '고장수리' || log.type === '예방정비'));
+            // 🔥 3. 정비/수리 내역 화면 그리기 (정기검사 추가)
+            const targetLogs = allMaintenanceLogs.filter(log => log.date && log.date.startsWith(timePrefix) && (log.type === '고장수리' || log.type === '예방정비' || log.type === '정기검사'));
             let mHtml = '';
 
             allVehicles.forEach(v => {
@@ -512,8 +510,17 @@
                             mHtml += `<td rowspan="${vLogs.length}" style="font-weight:900; background:#eef2f7; vertical-align:middle; border-right: 2px solid #cbd5e1;">${v}</td>`;
                         }
                         
-                        let typeColor = log.type === '고장수리' ? '#d9534f' : '#007bff';
-                        let itemName = log.type === '고장수리' ? log.part : log.item; 
+                        let typeColor = log.type === '고장수리' ? '#d9534f' : (log.type === '예방정비' ? '#007bff' : '#20c997');
+                        
+                        let itemName = '-';
+                        if (log.type === '고장수리') itemName = log.part;
+                        else if (log.type === '예방정비') itemName = log.item;
+                        else if (log.type === '정기검사') itemName = `${log.ipType} (${log.ipResult})`;
+
+                        let actionText = '-';
+                        if (log.type === '고장수리' || log.type === '예방정비') actionText = log.action;
+                        else if (log.type === '정기검사') actionText = `다음검사: ${log.ipNextDate || '미정'}`;
+
                         let totalKmStr = log.total ? `${log.total} km` : '-';
                         
                         mHtml += `
@@ -521,7 +528,7 @@
                             <td style="color:${typeColor}; font-weight:bold;">${log.type}</td>
                             <td style="font-weight:600; color:#555;">${totalKmStr}</td>
                             <td style="text-align:left; font-weight:bold;">${itemName || '-'}</td>
-                            <td style="text-align:left;">${log.action || '-'}</td>
+                            <td style="text-align:left;">${actionText || '-'}</td>
                             <td>${log.shop || '-'}</td>
                         </tr>`;
                     });
@@ -529,7 +536,7 @@
             });
 
             if(mHtml === '') {
-                mHtml = `<tr><td colspan="7" style="text-align:center; color:#666; padding:30px;">해당 기간에 등록된 고장수리/예방정비 내역이 없습니다.</td></tr>`;
+                mHtml = `<tr><td colspan="7" style="text-align:center; color:#666; padding:30px;">해당 기간에 등록된 고장수리/예방정비/정기검사 내역이 없습니다.</td></tr>`;
             }
             document.getElementById('maintenance-tbody').innerHTML = mHtml;
         }
