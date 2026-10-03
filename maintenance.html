@@ -260,25 +260,71 @@
             return koreaHolidays[`${year}-${mmdd}`] || koreaHolidays[mmdd] || null;
         }
 
-        function loadFromFirebase() {
-            db.collection('vehicle_logs').onSnapshot(snapshot => {
-                allRecords = [];
-                snapshot.forEach(doc => {
-                    let d = doc.data();
-                    d.id = doc.id; 
-                    allRecords.push(d);
+        // 🚀 CCTV(실시간 감시) 연결을 끊을 수 있는 스위치 변수 추가
+        let unsubscribeLogs = null; 
+
+        // 🚀 1. 요금 방어가 적용된 데이터 불러오기 함수
+        function loadFromFirebase(year, month) {
+            const startStr = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+            const endStr = `${year}-${String(month + 1).padStart(2, '0')}-31`;
+
+            // 다른 달로 넘어갔으면 이전 달 CCTV 전원을 끕니다! (이중 요금 방지)
+            if (unsubscribeLogs) unsubscribeLogs();
+
+            // 새로 켠 달력의 1일~31일 데이터에만 CCTV를 설치합니다.
+            unsubscribeLogs = db.collection('vehicle_logs')
+                .where("date", ">=", startStr)
+                .where("date", "<=", endStr)
+                .onSnapshot(snapshot => {
+                    allRecords = [];
+                    snapshot.forEach(doc => {
+                        let d = doc.data();
+                        d.id = doc.id; 
+                        allRecords.push(d);
+                    });
+                    
+                    // 데이터 오면 로딩창 즉시 제거
+                    const loader = document.getElementById('loading-overlay');
+                    if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 300); }
+
+                    renderCalendar(); 
+                    if(selectedDateStr) selectDate(selectedDateStr); 
+                    if(document.getElementById('modal-overlay').style.display === 'flex') checkUnresolvedIssues(); 
+                }, error => {
+                    console.error("DB 로드 에러:", error);
                 });
-                
-                document.getElementById('loading-overlay').style.display = 'none';
-                renderCalendar(); 
-                
-                if(selectedDateStr) selectDate(selectedDateStr); 
-                if(document.getElementById('modal-overlay').style.display === 'flex') checkUnresolvedIssues(); 
-            }, error => {
-                console.error("DB 로드 에러:", error);
-                document.getElementById('loading-overlay').innerText = '데이터를 불러오지 못했습니다.';
-            });
         }
+
+        // 🚀 2. 달력을 넘길 때 작동하는 함수 (바뀐 달에 맞춰 데이터 다시 호출)
+        function changeMonth(offset) {
+            currentDate.setMonth(currentDate.getMonth() + offset);
+            const newYear = currentDate.getFullYear();
+            const newMonth = currentDate.getMonth();
+            
+            // 달력이 넘어갈 때마다 새로운 달을 기준으로 DB를 다시 불러옵니다!
+            loadFromFirebase(newYear, newMonth);
+        }
+
+        // 🚀 3. 페이지 켤 때 작동 (안전 타이머 + 이번 달 데이터 호출)
+        window.onload = () => {
+            // 로딩창 1.5초 안전 타이머 (깃허브 무한 로딩 방지)
+            setTimeout(() => {
+                const loader = document.getElementById('loading-overlay');
+                if(loader && loader.style.display !== 'none') {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 300);
+                }
+            }, 1500);
+
+            const _now = new Date();
+            const year = _now.getFullYear(); 
+            const month = _now.getMonth(); 
+            const day = String(_now.getDate()).padStart(2, '0');
+            selectedDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${day}`;
+            
+            // 맨 처음 페이지를 켤 때 이번 달 기준으로 불러오기!
+            loadFromFirebase(year, month);
+        };
 
         function renderCalendar() {
             const year = currentDate.getFullYear();
