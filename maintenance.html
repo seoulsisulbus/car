@@ -113,7 +113,6 @@
         </div>
     </div>
 
-    <!-- 🚀 상세창 뼈대 튼튼하게 고정! -->
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #28a745; padding-bottom: 10px; margin-bottom: 10px;">
             <h3 id="detail-title" style="margin:0; font-size: 1.15rem; color: #2c3e50;">기록 상세</h3>
@@ -124,7 +123,6 @@
         </ul>
     </div>
 
-    <!-- 팝업 모달창 -->
     <div id="modal-overlay">
         <div class="modal-content">
             <div class="modal-title" id="modal-date-title">기록 추가</div>
@@ -154,9 +152,14 @@
                 <label for="type-routine" class="routine">일지(일정비)</label>
             </div>
 
+            <!-- 🚨 [고장수리] - 누적KM 추가! -->
             <div id="form-breakdown" style="display: none;">
                 <div class="form-group"><label>고장 원인</label><input type="text" id="bd-cause" placeholder="예: 브레이크 밀림"></div>
                 <div class="form-group"><label>수리 부품</label><input type="text" id="bd-part" placeholder="예: 앞바퀴 라이닝"></div>
+                <div class="form-group">
+                    <label>누적 KM (수리 시점)</label>
+                    <input type="text" inputmode="numeric" id="bd-total" oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');" placeholder="예: 123,456">
+                </div>
                 <div class="form-group">
                     <label>정비 업체 (선택)</label>
                     <select id="bd-shop">
@@ -173,8 +176,13 @@
                 </div>
             </div>
 
+            <!-- 🛡️ [예방정비] - 누적KM 추가! -->
             <div id="form-preventive" style="display: none;">
                 <div class="form-group"><label>점검 / 정비 항목</label><input type="text" id="pv-item" placeholder="예: 엔진오일, 타이어"></div>
+                <div class="form-group">
+                    <label>누적 KM (정비 시점)</label>
+                    <input type="text" inputmode="numeric" id="pv-total" oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');" placeholder="예: 123,456">
+                </div>
                 <div class="form-group">
                     <label>정비 업체 (선택)</label>
                     <select id="pv-shop">
@@ -190,11 +198,13 @@
                 </div>
             </div>
 
+            <!-- ⚠️ [특이사항(증상)] -->
             <div id="form-issue" style="display: none;">
                 <div class="form-group"><label>증상 요약</label><input type="text" id="is-title" placeholder="예: 고속 주행 시 핸들 떨림"></div>
                 <div class="form-group"><label>상세 내용 및 다음 운전자 주의사항</label><input type="text" id="is-detail" placeholder="예: 80km 이상 밟으면 진동이 심함. 배차 시 주의요망"></div>
             </div>
 
+            <!-- ✅ [일정비] -->
             <div id="form-routine">
                 <div id="issue-warning-container" class="issue-warning-box"></div>
 
@@ -249,8 +259,6 @@
         
         let allRecords = []; 
         let currentUser = localStorage.getItem('loggedInUser') || '관리자(미상)';
-
-        // 🚀 스르륵 화면 이동을 위한 핵심 변수!
         let isFirstLoad = true; 
 
         function toggleViewMode() {
@@ -297,7 +305,6 @@
                     if(selectedDateStr) selectDate(selectedDateStr); 
                     if(document.getElementById('modal-overlay').style.display === 'flex') checkUnresolvedIssues(); 
 
-                    // 🚀 화면 켜질 때 & 달력 넘길 때 자동으로 선택된 날짜로 스르륵!
                     if (isFirstLoad) {
                         setTimeout(() => {
                             const cell = document.getElementById(`cell_${selectedDateStr}`);
@@ -313,20 +320,17 @@
                 });
         }
 
-        // 🚀 화살표 눌러서 다른 달로 이동할 때
         function changeMonth(offset) {
             currentDate.setMonth(currentDate.getMonth() + offset);
             const newYear = currentDate.getFullYear();
             const newMonth = currentDate.getMonth();
             
-            // 달 넘길 때는 무조건 그 달의 '1일'을 선택한 상태로 만들고 스르륵 이동!
             selectedDateStr = `${newYear}-${String(newMonth + 1).padStart(2, '0')}-01`;
             isFirstLoad = true; 
             
             loadFromFirebase(newYear, newMonth);
         }
 
-        // 🚀 페이지 처음 켰을 때
         window.onload = () => {
             setTimeout(() => {
                 const loader = document.getElementById('loading-overlay');
@@ -340,8 +344,6 @@
             const year = _now.getFullYear(); 
             const month = _now.getMonth(); 
             const day = String(_now.getDate()).padStart(2, '0');
-            
-            // 오늘 날짜 선택!
             selectedDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${day}`;
             
             isFirstLoad = true; 
@@ -410,7 +412,6 @@
         }
 
         function handleCellClick(dateStr) {
-            // 날짜를 누르면 작성창이 바로 안 뜨고 선택만 됩니다.
             selectDate(dateStr); 
         }
 
@@ -418,7 +419,6 @@
             selectedDateStr = dateStr;
             renderCalendar(); 
 
-            // 제목만 업데이트
             document.getElementById('detail-title').innerText = `기록 상세 (${dateStr})`;
 
             const contentUl = document.getElementById('detail-content');
@@ -451,11 +451,13 @@
                             <span style="color:#888; font-size:0.8rem;">(${r.chkItems || ''})</span>
                         </div>`;
                 } else if (r.type === '고장수리') {
-                    let shopText = r.shop ? `<br><b style="color:#007bff;">정비업체:</b> ${r.shop}` : '';
-                    html += `<div><b>원인:</b> ${r.cause} &nbsp;|&nbsp; <b>부품:</b> ${r.part} <br> <b>조치:</b> ${r.action} ${shopText}</div>`;
+                    let shopText = r.shop ? ` &nbsp;|&nbsp; <b style="color:#007bff;">업체:</b> ${r.shop}` : '';
+                    let totalKmText = r.total ? `<br><b>누적KM:</b> ${r.total}km` : '';
+                    html += `<div><b>원인:</b> ${r.cause} &nbsp;|&nbsp; <b>부품:</b> ${r.part} ${totalKmText} <br> <b>조치:</b> ${r.action} ${shopText}</div>`;
                 } else if (r.type === '예방정비') {
-                    let shopText = r.shop ? `<br><b style="color:#007bff;">정비업체:</b> ${r.shop}` : '';
-                    html += `<div><b>항목:</b> ${r.item} &nbsp;|&nbsp; <b>조치:</b> ${r.action} ${shopText}</div>`;
+                    let shopText = r.shop ? ` &nbsp;|&nbsp; <b style="color:#007bff;">업체:</b> ${r.shop}` : '';
+                    let totalKmText = r.total ? `<br><b>누적KM:</b> ${r.total}km` : '';
+                    html += `<div><b>항목:</b> ${r.item} ${totalKmText} <br> <b>조치:</b> ${r.action} ${shopText}</div>`;
                 } else if (r.type === '특이사항') {
                     let statusBadge = r.isResolved 
                         ? `<span style="background:#28a745; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:5px;">해결완료</span>` 
@@ -501,11 +503,13 @@
                 document.getElementById('type-breakdown').checked = true;
                 document.getElementById('bd-cause').value = r.cause || '';
                 document.getElementById('bd-part').value = r.part || '';
+                document.getElementById('bd-total').value = r.total ? r.total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
                 document.getElementById('bd-shop').value = r.shop || '';
                 document.getElementById('bd-action').value = r.action || '교체';
             } else if (r.type === '예방정비') {
                 document.getElementById('type-preventive').checked = true;
                 document.getElementById('pv-item').value = r.item || '';
+                document.getElementById('pv-total').value = r.total ? r.total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
                 document.getElementById('pv-shop').value = r.shop || '';
                 document.getElementById('pv-action').value = r.action || '교체';
             } else if (r.type === '특이사항') {
@@ -575,8 +579,8 @@
             document.getElementById('m-date').value = selectedDateStr;
             document.getElementById('m-doc-id').value = ""; 
             
-            document.getElementById('bd-cause').value = ''; document.getElementById('bd-part').value = ''; document.getElementById('bd-shop').value = '';
-            document.getElementById('pv-item').value = ''; document.getElementById('pv-shop').value = '';
+            document.getElementById('bd-cause').value = ''; document.getElementById('bd-part').value = ''; document.getElementById('bd-total').value = ''; document.getElementById('bd-shop').value = '';
+            document.getElementById('pv-item').value = ''; document.getElementById('pv-total').value = ''; document.getElementById('pv-shop').value = '';
             document.getElementById('is-title').value = ''; document.getElementById('is-detail').value = ''; 
             document.getElementById('rt-range').value = ''; document.getElementById('rt-total').value = ''; document.getElementById('rt-def').value = '';
             document.querySelectorAll('.rt-chk').forEach(chk => chk.checked = false);
@@ -620,6 +624,7 @@
                 newRecord.type = '고장수리';
                 newRecord.cause = document.getElementById('bd-cause').value;
                 newRecord.part = document.getElementById('bd-part').value;
+                newRecord.total = document.getElementById('bd-total').value; // 누적KM 저장
                 newRecord.action = document.getElementById('bd-action').value;
                 newRecord.shop = document.getElementById('bd-shop').value; 
                 if(!newRecord.cause || !newRecord.part) return alert("고장 원인과 수리 부품을 모두 입력해주세요!");
@@ -627,7 +632,9 @@
             else if (isPreventive) {
                 newRecord.type = '예방정비';
                 newRecord.item = document.getElementById('pv-item').value;
+                newRecord.total = document.getElementById('pv-total').value; // 누적KM 저장
                 newRecord.action = document.getElementById('pv-action').value;
+                newNode.shop = document.getElementById('pv-shop').value; 
                 newRecord.shop = document.getElementById('pv-shop').value; 
                 if(!newRecord.item) return alert("점검/정비 항목을 입력해주세요!");
             } 
