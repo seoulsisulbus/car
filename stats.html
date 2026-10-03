@@ -165,7 +165,7 @@
             </div>
         </div>
 
-        <!-- 🔥 3. 정비/수리 내역 구역 (정기검사 추가) -->
+        <!-- 🔥 3. 정비/수리 내역 구역 -->
         <div id="section-maintenance" style="display: none;">
             <div class="table-section">
                 <h3>차량별 주요 정비 내역 (고장수리, 예방정비, 정기검사)</h3>
@@ -495,7 +495,7 @@
             });
             document.getElementById('driver-tbody').innerHTML = dHtml;
 
-            // 🔥 3. 정비/수리 내역 화면 그리기 (정기검사 추가)
+            // 🔥 정비/수리 내역 화면 그리기 (불합격 사유 추가 완벽 반영!)
             const targetLogs = allMaintenanceLogs.filter(log => log.date && log.date.startsWith(timePrefix) && (log.type === '고장수리' || log.type === '예방정비' || log.type === '정기검사'));
             let mHtml = '';
 
@@ -515,7 +515,15 @@
                         let itemName = '-';
                         if (log.type === '고장수리') itemName = log.part;
                         else if (log.type === '예방정비') itemName = log.item;
-                        else if (log.type === '정기검사') itemName = `${log.ipType} (${log.ipResult})`;
+                        else if (log.type === '정기검사') {
+                            // 🚀 집계창에도 불합격 시 사유(매연 등)가 괄호로 예쁘게 나옵니다!
+                            let resText = log.ipResult;
+                            if (log.ipResult.includes('불합격') && log.ipReason) {
+                                resText += ` (${log.ipReason})`;
+                                typeColor = '#dc3545'; // 불합격이면 집계창에서도 글씨 빨갛게!
+                            }
+                            itemName = `<span style="color:${typeColor}; font-weight:bold;">${log.ipType} [${resText}]</span>`;
+                        }
 
                         let actionText = '-';
                         if (log.type === '고장수리' || log.type === '예방정비') actionText = log.action;
@@ -527,7 +535,7 @@
                             <td>${log.date}</td>
                             <td style="color:${typeColor}; font-weight:bold;">${log.type}</td>
                             <td style="font-weight:600; color:#555;">${totalKmStr}</td>
-                            <td style="text-align:left; font-weight:bold;">${itemName || '-'}</td>
+                            <td style="text-align:left; font-weight:bold;">${itemName}</td>
                             <td style="text-align:left;">${actionText || '-'}</td>
                             <td>${log.shop || '-'}</td>
                         </tr>`;
