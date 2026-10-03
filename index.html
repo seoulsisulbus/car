@@ -673,10 +673,36 @@
             hideLoading();
         }
 
+        // 🚀 실시간 감시(CCTV) 전원 스위치 변수들
+        let unsubRes = null;
+        let unsubStatus = null;
+        let unsubMod = null;
+        let unsubMemo = null;
+        let unsubAttach = null;
+
         async function loadFromFirebase() {
             showLoading('데이터 불러오는 중...');
+            
+            // 🚀 현재 켜진 달력 기준으로 [한 달 전 1일] ~ [한 달 뒤 마지막 날] 범위를 구합니다. (총 3개월치)
+            const startDate = new Date(currentYear, currentMonth - 1, 1);
+            const endDate = new Date(currentYear, currentMonth + 2, 0); 
+            
+            const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-01`;
+            const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+
+            // 🚀 이미 켜져있는 CCTV가 있다면 모두 끕니다. (중복 과금 및 꼬임 방지)
+            if (unsubRes) unsubRes();
+            if (unsubStatus) unsubStatus();
+            if (unsubMod) unsubMod();
+            if (unsubMemo) unsubMemo();
+            if (unsubAttach) unsubAttach();
+
             try {
-                const resSnap = await db.collection('reservations').get();
+                // 🚀 [요금 방어 마법] 배차 데이터 불러올 때 최근 3개월 치만 가져오기
+                const resSnap = await db.collection('reservations')
+                                        .where("startDate", ">=", startStr)
+                                        .where("startDate", "<=", endStr)
+                                        .get();
                 allReservations = [];
                 resSnap.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
 
@@ -703,7 +729,6 @@
                     if (typeof engineModifiers !== 'undefined') engineModifiers[doc.id] = doc.data().useEngineB || false; 
                 });
 
-                // 🚀 메모 데이터 1차 로딩
                 const memoSnap = await db.collection('daily_memos').get();
                 dailyMemos = {};
                 memoSnap.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
@@ -711,20 +736,23 @@
                 recalculateAll(false); 
                 if (currentDate) selectDate(currentDate); 
 
-                // --- 실시간 CCTV 감시 구역 ---
-                db.collection('reservations').onSnapshot(snapshot => {
-                    allReservations = [];
-                    snapshot.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
-                    recalculateAll(false); if (currentDate) selectDate(currentDate);
-                });
+                // --- 🚀 실시간 CCTV 감시 구역 (여기에도 범위 제한 적용!) ---
+                unsubRes = db.collection('reservations')
+                             .where("startDate", ">=", startStr)
+                             .where("startDate", "<=", endStr)
+                             .onSnapshot(snapshot => {
+                                allReservations = [];
+                                snapshot.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
+                                recalculateAll(false); if (currentDate) selectDate(currentDate);
+                             });
 
-                db.collection('daily_status').onSnapshot(snapshot => {
+                unsubStatus = db.collection('daily_status').onSnapshot(snapshot => {
                     dailyDriverStatus = {};
                     snapshot.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
                     recalculateAll(false); if (currentDate) selectDate(currentDate);
                 });
 
-                db.collection('driver_modifiers').onSnapshot(snapshot => {
+                unsubMod = db.collection('driver_modifiers').onSnapshot(snapshot => {
                     driverListModifiers = {};
                     if (typeof engineModifiers !== 'undefined') engineModifiers = {}; 
                     snapshot.forEach(doc => { 
@@ -734,16 +762,14 @@
                     recalculateAll(false); if (currentDate) selectDate(currentDate);
                 });
 
-                // (기존 코드) 메모 실시간 업데이트 감시
-                db.collection('daily_memos').onSnapshot(snapshot => {
+                unsubMemo = db.collection('daily_memos').onSnapshot(snapshot => {
                     dailyMemos = {};
                     snapshot.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
-                    renderCalendar(); // 🚀 [추가됨] 달력도 클릭 없이 실시간으로 바로 새로고침!
+                    renderCalendar(); 
                     if (currentDate) renderDispatchResult(currentDate); 
                 });
 
-                // 🚀 [여기에 추가!] 신청서 보관함 실시간 감시
-                db.collection('daily_attachments').onSnapshot(snapshot => {
+                unsubAttach = db.collection('daily_attachments').onSnapshot(snapshot => {
                     dailyAttachments = {};
                     snapshot.forEach(doc => { dailyAttachments[doc.id] = doc.data().files || []; });
                     if (currentDate) renderDispatchResult(currentDate); 
@@ -1174,6 +1200,7 @@
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
             else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
             renderCalendar();
+            loadFromFirebase();
         }
 
         function renderCalendar() {
