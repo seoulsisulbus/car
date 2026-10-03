@@ -113,15 +113,18 @@
         </div>
     </div>
 
+    <!-- 🚀 상세창 뼈대 튼튼하게 고정! -->
     <div class="card">
-        <div style="border-bottom: 2px solid #28a745; padding-bottom: 10px; margin-bottom: 10px;">
-            <h3 id="detail-title" style="margin:0; font-size: 1.15rem; color: #2c3e50;">차량 기록 상세</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #28a745; padding-bottom: 10px; margin-bottom: 10px;">
+            <h3 id="detail-title" style="margin:0; font-size: 1.15rem; color: #2c3e50;">기록 상세</h3>
+            <button onclick="openModalForSelectedDate()" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">+ 기록 추가</button>
         </div>
         <ul id="detail-content" class="result-list">
-            <li style="color:#666; text-align:center;">달력에서 날짜를 클릭하면 작성창이 열립니다.</li>
+            <li style="color:#666; text-align:center; padding: 20px;">달력 날짜를 클릭하시면 상세 내역이 표시됩니다.</li>
         </ul>
     </div>
 
+    <!-- 팝업 모달창 -->
     <div id="modal-overlay">
         <div class="modal-content">
             <div class="modal-title" id="modal-date-title">기록 추가</div>
@@ -247,6 +250,9 @@
         let allRecords = []; 
         let currentUser = localStorage.getItem('loggedInUser') || '관리자(미상)';
 
+        // 🚀 스르륵 화면 이동을 위한 핵심 변수!
+        let isFirstLoad = true; 
+
         function toggleViewMode() {
             const viewport = document.querySelector('meta[name="viewport"]');
             const btn = document.getElementById('btn-toggle-view');
@@ -265,14 +271,11 @@
             return koreaHolidays[`${year}-${mmdd}`] || koreaHolidays[mmdd] || null;
         }
 
-        // 🚀 요금 방어용 CCTV 스위치
         let unsubscribeLogs = null; 
 
-        // 🚀 1. 요금 방어 모드: '현재 보고 있는 달력의 달' 데이터만 쏙 빼옵니다!
         function loadFromFirebase(year, month) {
             if (unsubscribeLogs) unsubscribeLogs();
             
-            // 파이어베이스 누락 버그를 막기 위해 해당 월의 1일~31일로 타이트하게 지정
             const startStr = `${year}-${String(month + 1).padStart(2, '0')}-01`;
             const endStr = `${year}-${String(month + 1).padStart(2, '0')}-31`;
 
@@ -293,23 +296,38 @@
                     renderCalendar(); 
                     if(selectedDateStr) selectDate(selectedDateStr); 
                     if(document.getElementById('modal-overlay').style.display === 'flex') checkUnresolvedIssues(); 
+
+                    // 🚀 화면 켜질 때 & 달력 넘길 때 자동으로 선택된 날짜로 스르륵!
+                    if (isFirstLoad) {
+                        setTimeout(() => {
+                            const cell = document.getElementById(`cell_${selectedDateStr}`);
+                            if (cell) {
+                                cell.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                            }
+                        }, 200);
+                        isFirstLoad = false;
+                    }
+
                 }, error => {
                     console.error("DB 로드 에러:", error);
                 });
         }
 
-        // 🚀 2. 달력 넘길 때: 화살표를 누르면 바뀐 달의 데이터만 다시 불러옵니다!
+        // 🚀 화살표 눌러서 다른 달로 이동할 때
         function changeMonth(offset) {
             currentDate.setMonth(currentDate.getMonth() + offset);
             const newYear = currentDate.getFullYear();
             const newMonth = currentDate.getMonth();
             
+            // 달 넘길 때는 무조건 그 달의 '1일'을 선택한 상태로 만들고 스르륵 이동!
+            selectedDateStr = `${newYear}-${String(newMonth + 1).padStart(2, '0')}-01`;
+            isFirstLoad = true; 
+            
             loadFromFirebase(newYear, newMonth);
         }
 
-        // 🚀 3. 처음 켤 때 작동
+        // 🚀 페이지 처음 켰을 때
         window.onload = () => {
-            // 로딩창 1.5초 안전 타이머
             setTimeout(() => {
                 const loader = document.getElementById('loading-overlay');
                 if(loader && loader.style.display !== 'none') {
@@ -322,8 +340,11 @@
             const year = _now.getFullYear(); 
             const month = _now.getMonth(); 
             const day = String(_now.getDate()).padStart(2, '0');
+            
+            // 오늘 날짜 선택!
             selectedDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${day}`;
             
+            isFirstLoad = true; 
             loadFromFirebase(year, month);
         };
 
@@ -389,20 +410,22 @@
         }
 
         function handleCellClick(dateStr) {
+            // 날짜를 누르면 작성창이 바로 안 뜨고 선택만 됩니다.
             selectDate(dateStr); 
-            openModalForSelectedDate(); 
         }
 
         function selectDate(dateStr) {
             selectedDateStr = dateStr;
             renderCalendar(); 
 
-            document.getElementById('detail-title').innerText = `차량 기록 상세 (${dateStr})`;
+            // 제목만 업데이트
+            document.getElementById('detail-title').innerText = `기록 상세 (${dateStr})`;
+
             const contentUl = document.getElementById('detail-content');
             const dayRecords = allRecords.filter(r => r.date === dateStr);
 
             if(dayRecords.length === 0) {
-                contentUl.innerHTML = `<li style="color:#666; text-align:center; padding: 20px;">이 날짜에 등록된 차량 기록이 없습니다.<br>(달력 날짜를 클릭하여 추가해주세요)</li>`;
+                contentUl.innerHTML = `<li style="color:#666; text-align:center; padding: 20px;">이 날짜에 등록된 차량 기록이 없습니다.<br><br>우측 상단의 <b>[+ 기록 추가]</b> 버튼을 눌러주세요.</li>`;
                 return;
             }
 
@@ -420,12 +443,12 @@
                     html += `
                         <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
                             <span><b>주행가능:</b> ${r.range ? r.range+'km' : '미입력'}</span>
-                            <span><b>누적:</b> ${r.total}km</span>
+                            <span><b>누적:</b> ${r.total ? r.total+'km' : '미입력'}</span>
                             <span><b>요소수:</b> ${r.def ? r.def+'%' : '미입력'}</span>
                         </div>
                         <div style="color: #495057; font-size: 0.9rem; margin-top: 6px;">
                             <b>일일 점검:</b> 총 6항목 중 <b style="color:#fd7e14;">${r.chkCount}개</b> 체크 완료 
-                            <span style="color:#888; font-size:0.8rem;">(${r.chkItems})</span>
+                            <span style="color:#888; font-size:0.8rem;">(${r.chkItems || ''})</span>
                         </div>`;
                 } else if (r.type === '고장수리') {
                     let shopText = r.shop ? `<br><b style="color:#007bff;">정비업체:</b> ${r.shop}` : '';
@@ -437,7 +460,7 @@
                     let statusBadge = r.isResolved 
                         ? `<span style="background:#28a745; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:5px;">해결완료</span>` 
                         : `<span style="background:#dc3545; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:5px;">미해결</span>`;
-                    html += `<div><b style="color:#8e44ad;">증상:</b> ${r.title} ${statusBadge} <br> <b style="color:#555;">상세/주의사항:</b> ${r.detail}</div>`;
+                    html += `<div><b style="color:#8e44ad;">증상:</b> ${r.title} ${statusBadge} <br> <b style="color:#555;">상세:</b> ${r.detail}</div>`;
                 }
                 
                 html += `
@@ -452,7 +475,6 @@
 
         function deleteRecord(docId) {
             if(confirm("정말 이 기록을 삭제하시겠습니까? (복구 불가능)")) {
-                // 🚀 빠른 UI 갱신
                 allRecords = allRecords.filter(r => r.id !== docId);
                 renderCalendar();
                 selectDate(selectedDateStr);
@@ -536,7 +558,6 @@
         function resolveIssue(docId) {
             if(!confirm('이 특이사항(증상)이 정비되어 완전히 해결되었습니까?')) return;
             
-            // 🚀 빠른 UI 갱신
             const idx = allRecords.findIndex(r => r.id === docId);
             if(idx !== -1) allRecords[idx].isResolved = true;
             checkUnresolvedIssues(); 
@@ -638,7 +659,6 @@
             const targetId = docId ? docId : Date.now().toString(); 
             newRecord.id = targetId;
 
-            // 🚀 서버 가기 전에 폰 화면에 0.01초 만에 띄워버리기!
             const existingIdx = allRecords.findIndex(r => r.id === targetId);
             if(existingIdx !== -1) allRecords[existingIdx] = newRecord;
             else allRecords.push(newRecord);
