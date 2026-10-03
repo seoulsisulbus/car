@@ -45,7 +45,6 @@
         .event-box.breakdown { background-color: #fce4ec; border: 1px solid #f8bbd0; color: #d32f2f; }
         .event-box.preventive { background-color: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; }
         .event-box.issue { background-color: #f3e5f5; border: 1px solid #e1bee7; color: #6a1b9a; }
-        /* 🚀 정기검사 태그 색상 추가 (눈에 띄는 민트색) */
         .event-box.inspection { background-color: #e6fcf5; border: 1px solid #63e6be; color: #0ca678; }
 
         .result-list { list-style: none; padding: 0; margin-top: 10px; }
@@ -59,7 +58,6 @@
         .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.9rem; color: #444; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: inherit; }
         
-        /* 🚀 2단 배열(Grid)로 버튼이 구겨지지 않게 배치! */
         .type-toggle-container { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
         .type-toggle-row { display: flex; gap: 4px; }
         .type-toggle-row input[type="radio"] { display: none; }
@@ -67,7 +65,7 @@
         
         .type-toggle-row input[type="radio"]:checked + label.breakdown { background: #dc3545; color: white; border-color: #dc3545; }
         .type-toggle-row input[type="radio"]:checked + label.preventive { background: #007bff; color: white; border-color: #007bff; }
-        .type-toggle-row input[type="radio"]:checked + label.inspection { background: #20c997; color: white; border-color: #20c997; } /* 정기검사는 민트색 */
+        .type-toggle-row input[type="radio"]:checked + label.inspection { background: #20c997; color: white; border-color: #20c997; }
         .type-toggle-row input[type="radio"]:checked + label.issue { background: #8e44ad; color: white; border-color: #8e44ad; }
         .type-toggle-row input[type="radio"]:checked + label.routine { background: #fd7e14; color: white; border-color: #fd7e14; }
 
@@ -104,7 +102,7 @@
 
     <div class="month-nav">
         <button onclick="changeMonth(-1)">◀</button>
-        <span id="current-month-display">2026년 10월</span>
+        <span id="current-month-display">26년 10월</span>
         <button onclick="changeMonth(1)">▶</button>
     </div>
 
@@ -143,7 +141,6 @@
                 </select>
             </div>
 
-            <!-- 🚀 2단 배열(Grid)로 예쁘게 정렬된 메뉴 버튼들 -->
             <div class="type-toggle-container">
                 <div class="type-toggle-row">
                     <input type="radio" id="type-breakdown" name="m-type" value="고장수리" onchange="toggleFormType()">
@@ -164,7 +161,6 @@
                 </div>
             </div>
 
-            <!-- 🚨 [고장수리] -->
             <div id="form-breakdown" style="display: none;">
                 <div class="form-group"><label>고장 원인</label><input type="text" id="bd-cause" placeholder="예: 브레이크 밀림"></div>
                 <div class="form-group"><label>수리 부품</label><input type="text" id="bd-part" placeholder="예: 앞바퀴 라이닝"></div>
@@ -188,7 +184,6 @@
                 </div>
             </div>
 
-            <!-- 🛡️ [예방정비] -->
             <div id="form-preventive" style="display: none;">
                 <div class="form-group"><label>점검 / 정비 항목</label><input type="text" id="pv-item" placeholder="예: 엔진오일, 타이어"></div>
                 <div class="form-group">
@@ -210,7 +205,7 @@
                 </div>
             </div>
 
-            <!-- 🟢 [정기검사] - 비용 없이 심플하게! -->
+            <!-- 🟢 [정기검사] 폼 -->
             <div id="form-inspection" style="display: none;">
                 <div class="form-group">
                     <label>검사 구분</label>
@@ -222,11 +217,19 @@
                 </div>
                 <div class="form-group">
                     <label>검사 결과</label>
-                    <select id="ip-result">
+                    <!-- 🚀 불합격 선택 시 사유창을 띄우는 onchange 추가 -->
+                    <select id="ip-result" onchange="toggleInspectionReason()">
                         <option value="합격">합격</option>
                         <option value="불합격(재검사)">불합격(재검사)</option>
                     </select>
                 </div>
+                
+                <!-- 🚀 숨겨진 불합격 사유 입력창 -->
+                <div class="form-group" id="ip-reason-group" style="display: none; background: #fff5f5; padding: 10px; border: 1px dashed #dc3545; border-radius: 6px;">
+                    <label style="color: #dc3545;">🚨 불합격 사유 (필수)</label>
+                    <input type="text" id="ip-reason" placeholder="예: 매연 초과, 제동력 미달" style="border-color: #dc3545;">
+                </div>
+
                 <div class="form-group">
                     <label>다음 검사 예정일 (만료일)</label>
                     <input type="date" id="ip-next-date">
@@ -237,13 +240,11 @@
                 </div>
             </div>
 
-            <!-- ⚠️ [특이사항(증상)] -->
             <div id="form-issue" style="display: none;">
                 <div class="form-group"><label>증상 요약</label><input type="text" id="is-title" placeholder="예: 고속 주행 시 핸들 떨림"></div>
                 <div class="form-group"><label>상세 내용 및 다음 운전자 주의사항</label><input type="text" id="is-detail" placeholder="예: 80km 이상 밟으면 진동이 심함. 배차 시 주의요망"></div>
             </div>
 
-            <!-- ✅ [일정비] -->
             <div id="form-routine">
                 <div id="issue-warning-container" class="issue-warning-box"></div>
 
@@ -265,7 +266,8 @@
                 <div class="checklist-group">
                     <span class="cl-title">출발 전 일일 점검 (체크)</span>
                     <label class="checklist-item"><input type="checkbox" class="rt-chk" value="엔진오일"> 1. 엔진오일 량 확인</label>
-                    <label class="checklist-item"><input type="checkbox" class="rt-chk" value="부동액"> 2. 부동액(냉각수) 확인</label>
+                    <!-- 🚀 2번 항목 이름 변경 -->
+                    <label class="checklist-item"><input type="checkbox" class="rt-chk" value="오일류/냉각수"> 2. 부동액, 브레이크액, 파워오일 확인</label>
                     <label class="checklist-item"><input type="checkbox" class="rt-chk" value="타이어"> 3. 타이어 공기압/마모 상태</label>
                     <label class="checklist-item"><input type="checkbox" class="rt-chk" value="제동장치"> 4. 제동장치 작동 확인</label>
                     <label class="checklist-item"><input type="checkbox" class="rt-chk" value="등화장치"> 5. 각종 등화장치 확인</label>
@@ -353,6 +355,7 @@
                         }, 200);
                         isFirstLoad = false;
                     }
+
                 }, error => {
                     console.error("DB 로드 에러:", error);
                 });
@@ -391,7 +394,8 @@
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            document.getElementById('current-month-display').innerText = `${year}년 ${month + 1}월`;
+            const shortYear = year.toString().slice(-2); // 🚀 26년 10월 적용!
+            document.getElementById('current-month-display').innerText = `${shortYear}년 ${month + 1}월`;
 
             const firstDay = new Date(year, month, 1).getDay();
             const lastDate = new Date(year, month + 1, 0).getDate();
@@ -438,8 +442,13 @@
                     tagHtml = `<div class="event-box breakdown"><b>[${r.vehicle}]</b> 고장수리</div>`;
                 } else if (r.type === '예방정비') {
                     tagHtml = `<div class="event-box preventive"><b>[${r.vehicle}]</b> 예방정비</div>`;
-                } else if (r.type === '정기검사') { // 🚀 정기검사 태그 추가
-                    tagHtml = `<div class="event-box inspection"><b>[${r.vehicle}]</b> ${r.ipType}(${r.ipResult})</div>`;
+                } else if (r.type === '정기검사') { 
+                    // 🚀 불합격일 땐 달력 태그에도 빨간색으로 강력하게 표시!
+                    if (r.ipResult.includes('불합격')) {
+                        tagHtml = `<div class="event-box breakdown"><b>[${r.vehicle}]</b> 검사 불합격</div>`;
+                    } else {
+                        tagHtml = `<div class="event-box inspection"><b>[${r.vehicle}]</b> ${r.ipType}(합격)</div>`;
+                    }
                 } else if (r.type === '특이사항') {
                     tagHtml = `<div class="event-box issue"><b>[${r.vehicle}]</b> ${r.title}</div>`;
                 }
@@ -449,6 +458,16 @@
 
         function handleCellClick(dateStr) {
             selectDate(dateStr); 
+        }
+
+        // 🚀 불합격 사유창 껐다 켰다 하는 마법 함수!
+        function toggleInspectionReason() {
+            const res = document.getElementById('ip-result').value;
+            if(res.includes('불합격')) {
+                document.getElementById('ip-reason-group').style.display = 'block';
+            } else {
+                document.getElementById('ip-reason-group').style.display = 'none';
+            }
         }
 
         function selectDate(dateStr) {
@@ -469,6 +488,9 @@
             dayRecords.forEach(r => {
                 let titleColor = r.type === '고장수리' ? '#d9534f' : (r.type === '예방정비' ? '#007bff' : (r.type === '특이사항' ? '#8e44ad' : (r.type === '정기검사' ? '#20c997' : '#fd7e14')));
                 
+                // 불합격이면 타이틀 색도 빨간색으로!
+                if(r.type === '정기검사' && r.ipResult.includes('불합격')) titleColor = '#d9534f';
+
                 html += `<li>
                     <div style="font-weight: 800; color: ${titleColor}; margin-bottom: 8px; font-size: 1.05rem; border-bottom: 1px dashed #ccc; padding-bottom: 5px; display:flex; justify-content:space-between; align-items:center;">
                         <span>[${r.vehicle}] ${r.type}</span>
@@ -494,9 +516,24 @@
                     let shopText = r.shop ? ` &nbsp;|&nbsp; <b style="color:#007bff;">업체:</b> ${r.shop}` : '';
                     let totalKmText = r.total ? `<br><b>누적KM:</b> ${r.total}km` : '';
                     html += `<div><b>항목:</b> ${r.item} ${totalKmText} <br> <b>조치:</b> ${r.action} ${shopText}</div>`;
-                } else if (r.type === '정기검사') { // 🚀 정기검사 상세 내역 렌더링
+                } else if (r.type === '정기검사') { 
                     let shopText = r.shop ? ` &nbsp;|&nbsp; <b style="color:#20c997;">검사소:</b> ${r.shop}` : '';
-                    html += `<div><b>검사구분:</b> ${r.ipType} (${r.ipResult}) <br> <b>다음 검사일:</b> ${r.ipNextDate || '미정'} ${shopText}</div>`;
+                    
+                    // 🚀 불합격 시 사유 및 재검사 상태 배지 표시
+                    let resultText = r.ipResult;
+                    if (r.ipResult.includes('불합격') && r.ipReason) {
+                        resultText += ` (${r.ipReason})`;
+                    }
+                    
+                    let statusBadge = '';
+                    if (r.ipResult.includes('불합격')) {
+                        statusBadge = r.isResolved 
+                            ? `<span style="background:#28a745; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:5px;">재검합격(해결)</span>` 
+                            : `<span style="background:#dc3545; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:5px;">재검요망</span>`;
+                    }
+                    
+                    let resColor = r.ipResult.includes('불합격') ? '#dc3545' : '#28a745';
+                    html += `<div><b>검사구분:</b> ${r.ipType} <span style="color:${resColor}; font-weight:bold;">[${resultText}]</span> ${statusBadge} <br> <b>다음 검사일:</b> ${r.ipNextDate || '미정'} ${shopText}</div>`;
                 } else if (r.type === '특이사항') {
                     let statusBadge = r.isResolved 
                         ? `<span style="background:#28a745; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:5px;">해결완료</span>` 
@@ -556,8 +593,10 @@
                 document.getElementById('type-inspection').checked = true;
                 document.getElementById('ip-type').value = r.ipType || '정기검사';
                 document.getElementById('ip-result').value = r.ipResult || '합격';
+                document.getElementById('ip-reason').value = r.ipReason || ''; // 사유창 불러오기
                 document.getElementById('ip-next-date').value = r.ipNextDate || '';
                 document.getElementById('ip-shop').value = r.shop || '';
+                toggleInspectionReason(); // 🚀 값이 세팅된 후 창 숨길지 말지 결정!
             } else if (r.type === '특이사항') {
                 document.getElementById('type-issue').checked = true;
                 document.getElementById('is-title').value = r.title || '';
@@ -580,17 +619,30 @@
         function checkUnresolvedIssues() {
             const vehicle = document.getElementById('m-vehicle').value;
             const warningBox = document.getElementById('issue-warning-container');
-            const unresolved = allRecords.filter(r => r.vehicle === vehicle && r.type === '특이사항' && !r.isResolved);
+            
+            // 🚀 미해결 특이사항 + 미해결(재검안받은) 불합격 검사 모두 긁어옵니다!
+            const unresolved = allRecords.filter(r => r.vehicle === vehicle && !r.isResolved && 
+                (r.type === '특이사항' || (r.type === '정기검사' && r.ipResult.includes('불합격')))
+            );
 
             if (unresolved.length > 0) {
                 warningBox.style.display = 'flex';
-                let html = '<span style="font-weight: 800; color: #d32f2f;">🚨 이전 운전자의 전달사항 (해결 요망)</span>';
+                let html = '<span style="font-weight: 800; color: #d32f2f;">🚨 이전 운전자의 차량 경고 (해결 요망)</span>';
+                
                 unresolved.forEach(issue => {
+                    // 특이사항인지 불합격인지 구분해서 이름 붙이기
+                    let badge = issue.type === '정기검사' 
+                        ? `<span style="background:#dc3545; color:white; padding:2px 4px; border-radius:4px; font-size:0.7rem; margin-right:4px;">검사불합격</span>` 
+                        : `<span style="background:#8e44ad; color:white; padding:2px 4px; border-radius:4px; font-size:0.7rem; margin-right:4px;">특이사항</span>`;
+                    
+                    let titleText = issue.type === '정기검사' ? `${issue.ipType} 불합격 (${issue.ipReason})` : issue.title;
+                    let detailText = issue.type === '정기검사' ? `빠른 시일 내 정비 후 재검사 요망` : issue.detail;
+
                     html += `
                     <div class="issue-item">
                         <div style="display:flex; flex-direction:column; gap:4px;">
-                            <span style="font-weight:bold; color:#721c24;">- ${issue.title}</span>
-                            <span style="font-size:0.8rem; color:#666;">상세: ${issue.detail} (${issue.date}, ${issue.driver} 작성)</span>
+                            <span style="font-weight:bold; color:#721c24;">${badge} ${titleText}</span>
+                            <span style="font-size:0.8rem; color:#666;">상세: ${detailText} (${issue.date}, ${issue.driver} 작성)</span>
                         </div>
                         <button type="button" onclick="resolveIssue('${issue.id}')" style="background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem; flex-shrink:0;">해결</button>
                     </div>`;
@@ -603,7 +655,15 @@
         }
 
         function resolveIssue(docId) {
-            if(!confirm('이 특이사항(증상)이 정비되어 완전히 해결되었습니까?')) return;
+            const issue = allRecords.find(r => r.id === docId);
+            if(!issue) return;
+
+            // 🚀 물어보는 문구를 상황에 맞게 찰떡같이 변경!
+            const msg = issue.type === '정기검사' 
+                ? '차량을 수리하고 재검사에서 최종 합격 처리되었습니까?' 
+                : '이 특이사항(증상)이 정비되어 완전히 해결되었습니까?';
+            
+            if(!confirm(msg)) return;
             
             const idx = allRecords.findIndex(r => r.id === docId);
             if(idx !== -1) allRecords[idx].isResolved = true;
@@ -611,7 +671,7 @@
             selectDate(selectedDateStr); 
 
             db.collection('vehicle_logs').doc(docId).update({ isResolved: true })
-            .then(() => alert('해결 완료!'))
+            .then(() => alert('해결 완료! 수고하셨습니다.'))
             .catch(e => alert('오류: ' + e));
         }
 
@@ -622,10 +682,17 @@
             document.getElementById('m-date').value = selectedDateStr;
             document.getElementById('m-doc-id').value = ""; 
             
-            // 모든 폼 초기화
             document.getElementById('bd-cause').value = ''; document.getElementById('bd-part').value = ''; document.getElementById('bd-total').value = ''; document.getElementById('bd-shop').value = '';
             document.getElementById('pv-item').value = ''; document.getElementById('pv-total').value = ''; document.getElementById('pv-shop').value = '';
-            document.getElementById('ip-type').value = '정기검사'; document.getElementById('ip-result').value = '합격'; document.getElementById('ip-next-date').value = ''; document.getElementById('ip-shop').value = '';
+            
+            // 정기검사 초기화 (합격으로 초기화하면서 사유창도 숨김)
+            document.getElementById('ip-type').value = '정기검사'; 
+            document.getElementById('ip-result').value = '합격'; 
+            document.getElementById('ip-reason').value = ''; 
+            document.getElementById('ip-next-date').value = ''; 
+            document.getElementById('ip-shop').value = '';
+            toggleInspectionReason();
+
             document.getElementById('is-title').value = ''; document.getElementById('is-detail').value = ''; 
             document.getElementById('rt-range').value = ''; document.getElementById('rt-total').value = ''; document.getElementById('rt-def').value = '';
             document.querySelectorAll('.rt-chk').forEach(chk => chk.checked = false);
@@ -643,7 +710,7 @@
         function toggleFormType() {
             const isBreakdown = document.getElementById('type-breakdown').checked;
             const isPreventive = document.getElementById('type-preventive').checked;
-            const isInspection = document.getElementById('type-inspection').checked; // 🚀 정기검사 추가
+            const isInspection = document.getElementById('type-inspection').checked; 
             const isIssue = document.getElementById('type-issue').checked;
             
             document.getElementById('form-breakdown').style.display = isBreakdown ? 'block' : 'none';
@@ -661,7 +728,7 @@
             
             const isBreakdown = document.getElementById('type-breakdown').checked;
             const isPreventive = document.getElementById('type-preventive').checked;
-            const isInspection = document.getElementById('type-inspection').checked; // 🚀
+            const isInspection = document.getElementById('type-inspection').checked; 
             const isIssue = document.getElementById('type-issue').checked;
             
             let newRecord = { date: date, vehicle: vehicle, driver: driver };
@@ -685,13 +752,23 @@
                 newRecord.shop = document.getElementById('pv-shop').value; 
                 if(!newRecord.item) return alert("점검/정비 항목을 입력해주세요!");
             }
-            else if (isInspection) { // 🚀 정기검사 데이터 저장
+            else if (isInspection) { 
                 newRecord.type = '정기검사';
                 newRecord.ipType = document.getElementById('ip-type').value;
                 newRecord.ipResult = document.getElementById('ip-result').value;
+                
+                // 🚀 불합격일 때만 사유를 챙기고, 경고창 띄우게 세팅!
+                if(newRecord.ipResult.includes('불합격')) {
+                    newRecord.ipReason = document.getElementById('ip-reason').value;
+                    if(!docId) newRecord.isResolved = false; // 신규 등록일 때 미해결로 세팅
+                    if(!newRecord.ipReason) return alert("불합격 사유를 필수로 입력해주세요!");
+                } else {
+                    newRecord.ipReason = "";
+                    if(!docId) newRecord.isResolved = true; // 합격이면 알아서 패스
+                }
+
                 newRecord.ipNextDate = document.getElementById('ip-next-date').value;
                 newRecord.shop = document.getElementById('ip-shop').value;
-                if(!newRecord.ipNextDate) return alert("다음 검사 예정일을 입력해주세요!");
             }
             else if (isIssue) {
                 newRecord.type = '특이사항';
