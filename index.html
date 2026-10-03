@@ -223,7 +223,7 @@
             <div class="main-section">
                 <div class="card">
                     <div class="calendar-header">
-                        <span id="month-display">2026년 8월</span>
+                        <span id="month-display">26년 8월</span>
                         <div style="display: flex; gap: 4px; align-items: center;">
                              <button onclick="window.open('maintenance.html', '_blank')" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem; margin-left: 5px;">정비</button>
                             <button id="btn-toggle-view" onclick="toggleViewMode()" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">PC버전</button>
@@ -1204,7 +1204,10 @@
         }
 
         function renderCalendar() {
-            document.getElementById('month-display').innerText = `📅 ${currentYear}년 ${currentMonth + 1}월`;
+            // 🚀 연도를 2자리(예: 26)로 자르고 📅 이모티콘을 제거했습니다!
+            const shortYear = currentYear.toString().slice(-2);
+            document.getElementById('month-display').innerText = `${shortYear}년 ${currentMonth + 1}월`;
+            
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = `<div class="calendar-day-header sun">일</div><div class="calendar-day-header">월</div><div class="calendar-day-header">화</div><div class="calendar-day-header">수</div><div class="calendar-day-header">목</div><div class="calendar-day-header">금</div><div class="calendar-day-header sat">토</div>`;
 
