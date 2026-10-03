@@ -45,6 +45,8 @@
         .event-box.breakdown { background-color: #fce4ec; border: 1px solid #f8bbd0; color: #d32f2f; }
         .event-box.preventive { background-color: #e3f2fd; border: 1px solid #bbdefb; color: #0d47a1; }
         .event-box.issue { background-color: #f3e5f5; border: 1px solid #e1bee7; color: #6a1b9a; }
+        /* 🚀 정기검사 태그 색상 추가 (눈에 띄는 민트색) */
+        .event-box.inspection { background-color: #e6fcf5; border: 1px solid #63e6be; color: #0ca678; }
 
         .result-list { list-style: none; padding: 0; margin-top: 10px; }
         .result-list li { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin-bottom: 10px; border-radius: 6px; font-size: 0.95rem; line-height: 1.6; }
@@ -57,14 +59,17 @@
         .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.9rem; color: #444; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: inherit; }
         
-        .type-toggle { display: flex; gap: 4px; margin-bottom: 15px; }
-        .type-toggle input[type="radio"] { display: none; }
-        .type-toggle label { flex: 1; text-align: center; padding: 10px 2px; background: #e9ecef; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; font-weight: bold; color: #6c757d; font-size: 0.85rem; letter-spacing: -0.8px; }
+        /* 🚀 2단 배열(Grid)로 버튼이 구겨지지 않게 배치! */
+        .type-toggle-container { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
+        .type-toggle-row { display: flex; gap: 4px; }
+        .type-toggle-row input[type="radio"] { display: none; }
+        .type-toggle-row label { flex: 1; text-align: center; padding: 10px 2px; background: #e9ecef; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; font-weight: bold; color: #6c757d; font-size: 0.85rem; letter-spacing: -0.8px; }
         
-        .type-toggle input[type="radio"]:checked + label.breakdown { background: #dc3545; color: white; border-color: #dc3545; }
-        .type-toggle input[type="radio"]:checked + label.preventive { background: #007bff; color: white; border-color: #007bff; }
-        .type-toggle input[type="radio"]:checked + label.issue { background: #8e44ad; color: white; border-color: #8e44ad; }
-        .type-toggle input[type="radio"]:checked + label.routine { background: #fd7e14; color: white; border-color: #fd7e14; }
+        .type-toggle-row input[type="radio"]:checked + label.breakdown { background: #dc3545; color: white; border-color: #dc3545; }
+        .type-toggle-row input[type="radio"]:checked + label.preventive { background: #007bff; color: white; border-color: #007bff; }
+        .type-toggle-row input[type="radio"]:checked + label.inspection { background: #20c997; color: white; border-color: #20c997; } /* 정기검사는 민트색 */
+        .type-toggle-row input[type="radio"]:checked + label.issue { background: #8e44ad; color: white; border-color: #8e44ad; }
+        .type-toggle-row input[type="radio"]:checked + label.routine { background: #fd7e14; color: white; border-color: #fd7e14; }
 
         .issue-warning-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; display: none; flex-direction: column; gap: 8px; }
         .issue-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px 10px; border-radius: 4px; border: 1px solid #f5c6cb; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -138,21 +143,28 @@
                 </select>
             </div>
 
-            <div class="type-toggle">
-                <input type="radio" id="type-breakdown" name="m-type" value="고장수리" onchange="toggleFormType()">
-                <label for="type-breakdown" class="breakdown">고장수리</label>
-                
-                <input type="radio" id="type-preventive" name="m-type" value="예방정비" onchange="toggleFormType()">
-                <label for="type-preventive" class="preventive">예방정비</label>
-                
-                <input type="radio" id="type-issue" name="m-type" value="특이사항" onchange="toggleFormType()">
-                <label for="type-issue" class="issue">특이사항</label>
+            <!-- 🚀 2단 배열(Grid)로 예쁘게 정렬된 메뉴 버튼들 -->
+            <div class="type-toggle-container">
+                <div class="type-toggle-row">
+                    <input type="radio" id="type-breakdown" name="m-type" value="고장수리" onchange="toggleFormType()">
+                    <label for="type-breakdown" class="breakdown">고장수리</label>
+                    
+                    <input type="radio" id="type-preventive" name="m-type" value="예방정비" onchange="toggleFormType()">
+                    <label for="type-preventive" class="preventive">예방정비</label>
 
-                <input type="radio" id="type-routine" name="m-type" value="일정비" onchange="toggleFormType()" checked>
-                <label for="type-routine" class="routine">일지(일정비)</label>
+                    <input type="radio" id="type-inspection" name="m-type" value="정기검사" onchange="toggleFormType()">
+                    <label for="type-inspection" class="inspection">정기검사</label>
+                </div>
+                <div class="type-toggle-row">
+                    <input type="radio" id="type-issue" name="m-type" value="특이사항" onchange="toggleFormType()">
+                    <label for="type-issue" class="issue">특이사항</label>
+                    
+                    <input type="radio" id="type-routine" name="m-type" value="일정비" onchange="toggleFormType()" checked>
+                    <label for="type-routine" class="routine">일지(일정비)</label>
+                </div>
             </div>
 
-            <!-- 🚨 [고장수리] - 누적KM 추가! -->
+            <!-- 🚨 [고장수리] -->
             <div id="form-breakdown" style="display: none;">
                 <div class="form-group"><label>고장 원인</label><input type="text" id="bd-cause" placeholder="예: 브레이크 밀림"></div>
                 <div class="form-group"><label>수리 부품</label><input type="text" id="bd-part" placeholder="예: 앞바퀴 라이닝"></div>
@@ -176,7 +188,7 @@
                 </div>
             </div>
 
-            <!-- 🛡️ [예방정비] - 누적KM 추가! -->
+            <!-- 🛡️ [예방정비] -->
             <div id="form-preventive" style="display: none;">
                 <div class="form-group"><label>점검 / 정비 항목</label><input type="text" id="pv-item" placeholder="예: 엔진오일, 타이어"></div>
                 <div class="form-group">
@@ -195,6 +207,33 @@
                     <select id="pv-action">
                         <option value="교체">정기 교체</option><option value="보충">부족분 보충</option><option value="점검완료">점검 완료 (이상 없음)</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- 🟢 [정기검사] - 비용 없이 심플하게! -->
+            <div id="form-inspection" style="display: none;">
+                <div class="form-group">
+                    <label>검사 구분</label>
+                    <select id="ip-type">
+                        <option value="정기검사">정기검사</option>
+                        <option value="종합검사">종합검사</option>
+                        <option value="임시검사">임시검사</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>검사 결과</label>
+                    <select id="ip-result">
+                        <option value="합격">합격</option>
+                        <option value="불합격(재검사)">불합격(재검사)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>다음 검사 예정일 (만료일)</label>
+                    <input type="date" id="ip-next-date">
+                </div>
+                <div class="form-group">
+                    <label>검사소 이름</label>
+                    <input type="text" id="ip-shop" placeholder="예: 남양주 자동차검사소">
                 </div>
             </div>
 
@@ -314,7 +353,6 @@
                         }, 200);
                         isFirstLoad = false;
                     }
-
                 }, error => {
                     console.error("DB 로드 에러:", error);
                 });
@@ -395,15 +433,13 @@
 
                 let tagHtml = '';
                 if (r.type === '일정비') {
-                    tagHtml = `
-                        <div class="event-box routine">
-                            <b>[${r.vehicle}]</b>&nbsp;&nbsp;요소수:${r.def ? r.def+'%' : '-'}<br>
-                            주행:${r.range ? r.range+'km' : '-'} | 점검:${r.chkCount}/6
-                        </div>`;
+                    tagHtml = `<div class="event-box routine"><b>[${r.vehicle}]</b>&nbsp;&nbsp;요소수:${r.def ? r.def+'%' : '-'}<br>주행:${r.range ? r.range+'km' : '-'} | 점검:${r.chkCount}/6</div>`;
                 } else if (r.type === '고장수리') {
                     tagHtml = `<div class="event-box breakdown"><b>[${r.vehicle}]</b> 고장수리</div>`;
                 } else if (r.type === '예방정비') {
                     tagHtml = `<div class="event-box preventive"><b>[${r.vehicle}]</b> 예방정비</div>`;
+                } else if (r.type === '정기검사') { // 🚀 정기검사 태그 추가
+                    tagHtml = `<div class="event-box inspection"><b>[${r.vehicle}]</b> ${r.ipType}(${r.ipResult})</div>`;
                 } else if (r.type === '특이사항') {
                     tagHtml = `<div class="event-box issue"><b>[${r.vehicle}]</b> ${r.title}</div>`;
                 }
@@ -431,7 +467,7 @@
 
             let html = '';
             dayRecords.forEach(r => {
-                let titleColor = r.type === '고장수리' ? '#d9534f' : (r.type === '예방정비' ? '#007bff' : (r.type === '특이사항' ? '#8e44ad' : '#fd7e14'));
+                let titleColor = r.type === '고장수리' ? '#d9534f' : (r.type === '예방정비' ? '#007bff' : (r.type === '특이사항' ? '#8e44ad' : (r.type === '정기검사' ? '#20c997' : '#fd7e14')));
                 
                 html += `<li>
                     <div style="font-weight: 800; color: ${titleColor}; margin-bottom: 8px; font-size: 1.05rem; border-bottom: 1px dashed #ccc; padding-bottom: 5px; display:flex; justify-content:space-between; align-items:center;">
@@ -458,6 +494,9 @@
                     let shopText = r.shop ? ` &nbsp;|&nbsp; <b style="color:#007bff;">업체:</b> ${r.shop}` : '';
                     let totalKmText = r.total ? `<br><b>누적KM:</b> ${r.total}km` : '';
                     html += `<div><b>항목:</b> ${r.item} ${totalKmText} <br> <b>조치:</b> ${r.action} ${shopText}</div>`;
+                } else if (r.type === '정기검사') { // 🚀 정기검사 상세 내역 렌더링
+                    let shopText = r.shop ? ` &nbsp;|&nbsp; <b style="color:#20c997;">검사소:</b> ${r.shop}` : '';
+                    html += `<div><b>검사구분:</b> ${r.ipType} (${r.ipResult}) <br> <b>다음 검사일:</b> ${r.ipNextDate || '미정'} ${shopText}</div>`;
                 } else if (r.type === '특이사항') {
                     let statusBadge = r.isResolved 
                         ? `<span style="background:#28a745; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:5px;">해결완료</span>` 
@@ -496,6 +535,7 @@
             
             document.getElementById('type-breakdown').checked = false;
             document.getElementById('type-preventive').checked = false;
+            document.getElementById('type-inspection').checked = false;
             document.getElementById('type-issue').checked = false;
             document.getElementById('type-routine').checked = false;
 
@@ -512,6 +552,12 @@
                 document.getElementById('pv-total').value = r.total ? r.total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
                 document.getElementById('pv-shop').value = r.shop || '';
                 document.getElementById('pv-action').value = r.action || '교체';
+            } else if (r.type === '정기검사') {
+                document.getElementById('type-inspection').checked = true;
+                document.getElementById('ip-type').value = r.ipType || '정기검사';
+                document.getElementById('ip-result').value = r.ipResult || '합격';
+                document.getElementById('ip-next-date').value = r.ipNextDate || '';
+                document.getElementById('ip-shop').value = r.shop || '';
             } else if (r.type === '특이사항') {
                 document.getElementById('type-issue').checked = true;
                 document.getElementById('is-title').value = r.title || '';
@@ -521,10 +567,7 @@
                 document.getElementById('rt-range').value = r.range ? r.range.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
                 document.getElementById('rt-total').value = r.total ? r.total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
                 document.getElementById('rt-def').value = r.def || '';
-                
-                document.querySelectorAll('.rt-chk').forEach(chk => {
-                    chk.checked = r.chkItems && r.chkItems.includes(chk.value);
-                });
+                document.querySelectorAll('.rt-chk').forEach(chk => { chk.checked = r.chkItems && r.chkItems.includes(chk.value); });
             }
 
             toggleFormType();
@@ -579,8 +622,10 @@
             document.getElementById('m-date').value = selectedDateStr;
             document.getElementById('m-doc-id').value = ""; 
             
+            // 모든 폼 초기화
             document.getElementById('bd-cause').value = ''; document.getElementById('bd-part').value = ''; document.getElementById('bd-total').value = ''; document.getElementById('bd-shop').value = '';
             document.getElementById('pv-item').value = ''; document.getElementById('pv-total').value = ''; document.getElementById('pv-shop').value = '';
+            document.getElementById('ip-type').value = '정기검사'; document.getElementById('ip-result').value = '합격'; document.getElementById('ip-next-date').value = ''; document.getElementById('ip-shop').value = '';
             document.getElementById('is-title').value = ''; document.getElementById('is-detail').value = ''; 
             document.getElementById('rt-range').value = ''; document.getElementById('rt-total').value = ''; document.getElementById('rt-def').value = '';
             document.querySelectorAll('.rt-chk').forEach(chk => chk.checked = false);
@@ -598,12 +643,14 @@
         function toggleFormType() {
             const isBreakdown = document.getElementById('type-breakdown').checked;
             const isPreventive = document.getElementById('type-preventive').checked;
+            const isInspection = document.getElementById('type-inspection').checked; // 🚀 정기검사 추가
             const isIssue = document.getElementById('type-issue').checked;
             
             document.getElementById('form-breakdown').style.display = isBreakdown ? 'block' : 'none';
             document.getElementById('form-preventive').style.display = isPreventive ? 'block' : 'none';
+            document.getElementById('form-inspection').style.display = isInspection ? 'block' : 'none';
             document.getElementById('form-issue').style.display = isIssue ? 'block' : 'none';
-            document.getElementById('form-routine').style.display = (!isBreakdown && !isPreventive && !isIssue) ? 'block' : 'none';
+            document.getElementById('form-routine').style.display = (!isBreakdown && !isPreventive && !isInspection && !isIssue) ? 'block' : 'none';
         }
 
         function saveMaintenance() {
@@ -614,6 +661,7 @@
             
             const isBreakdown = document.getElementById('type-breakdown').checked;
             const isPreventive = document.getElementById('type-preventive').checked;
+            const isInspection = document.getElementById('type-inspection').checked; // 🚀
             const isIssue = document.getElementById('type-issue').checked;
             
             let newRecord = { date: date, vehicle: vehicle, driver: driver };
@@ -624,7 +672,7 @@
                 newRecord.type = '고장수리';
                 newRecord.cause = document.getElementById('bd-cause').value;
                 newRecord.part = document.getElementById('bd-part').value;
-                newRecord.total = document.getElementById('bd-total').value; // 누적KM 저장
+                newRecord.total = document.getElementById('bd-total').value; 
                 newRecord.action = document.getElementById('bd-action').value;
                 newRecord.shop = document.getElementById('bd-shop').value; 
                 if(!newRecord.cause || !newRecord.part) return alert("고장 원인과 수리 부품을 모두 입력해주세요!");
@@ -632,12 +680,19 @@
             else if (isPreventive) {
                 newRecord.type = '예방정비';
                 newRecord.item = document.getElementById('pv-item').value;
-                newRecord.total = document.getElementById('pv-total').value; // 누적KM 저장
+                newRecord.total = document.getElementById('pv-total').value; 
                 newRecord.action = document.getElementById('pv-action').value;
-                newNode.shop = document.getElementById('pv-shop').value; 
                 newRecord.shop = document.getElementById('pv-shop').value; 
                 if(!newRecord.item) return alert("점검/정비 항목을 입력해주세요!");
-            } 
+            }
+            else if (isInspection) { // 🚀 정기검사 데이터 저장
+                newRecord.type = '정기검사';
+                newRecord.ipType = document.getElementById('ip-type').value;
+                newRecord.ipResult = document.getElementById('ip-result').value;
+                newRecord.ipNextDate = document.getElementById('ip-next-date').value;
+                newRecord.shop = document.getElementById('ip-shop').value;
+                if(!newRecord.ipNextDate) return alert("다음 검사 예정일을 입력해주세요!");
+            }
             else if (isIssue) {
                 newRecord.type = '특이사항';
                 newRecord.title = document.getElementById('is-title').value;
