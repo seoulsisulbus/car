@@ -260,7 +260,11 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const storage = firebase.storage(); 
+
+        // 🚀 오프라인 캐시(임시저장) 켜기! 
+        db.enablePersistence().catch(function(err) {
+            console.log("캐시 활성화 실패:", err);
+        }); 
 
         const systemUsers = {
             'admin1': { role: 'admin', pw: '123456' },
@@ -598,17 +602,16 @@
             return koreaHolidays[`${year}-${mmdd}`] || koreaHolidays[mmdd] || null;
         }
 
-        // 🚀 기사님 화면 전용 무적의 하이브리드 CCTV
-        // 🚀 실시간 감시(CCTV) 전원 스위치 변수들
+        
         let unsubRes = null;
         let unsubStatus = null;
         let unsubMod = null;
         let unsubMemo = null;
 
-        async function loadFromFirebase() {
+        function loadFromFirebase() {
             showLoading('데이터 동기화 중...');
             
-            // 🚀 현재 켜진 달력 기준으로 [한 달 전 1일] ~ [한 달 뒤 마지막 날] 범위를 구합니다. (총 3개월치)
+            // 🚀 배차 잘림 방지를 위해 3개월 넉넉히 가져옵니다 (캐시가 있으니 요금 걱정 무!)
             const startDate = new Date(currentYear, currentMonth - 1, 1);
             const endDate = new Date(currentYear, currentMonth + 2, 0); 
             
@@ -621,76 +624,47 @@
             if (unsubMod) unsubMod();
             if (unsubMemo) unsubMemo();
 
-            try {
-                // 🚀 [요금 방어 마법] 배차 데이터 3개월 치만 가져오기
-                const resSnap = await db.collection('reservations')
-                                        .where("startDate", ">=", startStr)
-                                        .where("startDate", "<=", endStr)
-                                        .get();
-                allReservations = [];
-                resSnap.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
+            // 🚨 핵심 포인트: .get()을 빼버리고 오직 .onSnapshot() 하나만 사용해서 읽기 요금을 반토막 냅니다.
+            unsubRes = db.collection('reservations')
+                         .where("startDate", ">=", startStr)
+                         .where("startDate", "<=", endStr)
+                         .onSnapshot(snapshot => {
+                            allReservations = [];
+                            snapshot.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
+                            
+                            recalculateAll(false);
+                            if (currentDate) renderMyStatusPanel(currentDate);
+                            
+                            hideLoading(); // 🚀 메인 데이터가 로딩되면 화면을 짠! 하고 켜줍니다.
+                         }, error => {
+                            console.warn("DB 연결 실패.", error);
+                            hideLoading();
+                         });
 
-                const statSnap = await db.collection('daily_status').get();
+            unsubStatus = db.collection('daily_status').onSnapshot(snapshot => {
                 dailyDriverStatus = {};
-                statSnap.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
+                snapshot.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
+                recalculateAll(false);
+                if (currentDate) renderMyStatusPanel(currentDate);
+            });
 
-                const modSnap = await db.collection('driver_modifiers').get();
+            unsubMod = db.collection('driver_modifiers').onSnapshot(snapshot => {
                 driverListModifiers = {};
-                engineModifiers = {}; 
-                modSnap.forEach(doc => { 
+                engineModifiers = {};
+                snapshot.forEach(doc => { 
                     driverListModifiers[doc.id] = doc.data().list; 
                     engineModifiers[doc.id] = doc.data().useEngineB || false; 
                 });
-
-                // 🚀 메모 데이터 로딩
-                const memoSnap = await db.collection('daily_memos').get();
-                dailyMemos = {};
-                memoSnap.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
-
                 recalculateAll(false);
-                if (currentDate) selectDate(currentDate);
+                if (currentDate) renderMyStatusPanel(currentDate);
+            });
 
-                // --- 🚀 실시간 CCTV 감시 구역 (여기에도 범위 제한 적용!) ---
-                unsubRes = db.collection('reservations')
-                             .where("startDate", ">=", startStr)
-                             .where("startDate", "<=", endStr)
-                             .onSnapshot(snapshot => {
-                                allReservations = [];
-                                snapshot.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
-                                recalculateAll(false);
-                                if (currentDate) renderMyStatusPanel(currentDate);
-                             });
-
-                unsubStatus = db.collection('daily_status').onSnapshot(snapshot => {
-                    dailyDriverStatus = {};
-                    snapshot.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
-                    recalculateAll(false);
-                    if (currentDate) renderMyStatusPanel(currentDate);
-                });
-
-                unsubMod = db.collection('driver_modifiers').onSnapshot(snapshot => {
-                    driverListModifiers = {};
-                    engineModifiers = {};
-                    snapshot.forEach(doc => { 
-                        driverListModifiers[doc.id] = doc.data().list; 
-                        engineModifiers[doc.id] = doc.data().useEngineB || false; 
-                    });
-                    recalculateAll(false);
-                    if (currentDate) renderMyStatusPanel(currentDate);
-                });
-
-                unsubMemo = db.collection('daily_memos').onSnapshot(snapshot => {
-                    dailyMemos = {};
-                    snapshot.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
-                    renderCalendar(); 
-                    if (currentDate) renderDispatchResult(currentDate); 
-                });
-
-            } catch (error) { 
-                console.warn("DB 연결 실패.", error); 
-            } finally { 
-                hideLoading(); 
-            }
+            unsubMemo = db.collection('daily_memos').onSnapshot(snapshot => {
+                dailyMemos = {};
+                snapshot.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
+                renderCalendar(); 
+                if (currentDate) renderDispatchResult(currentDate); 
+            });
         }
 
         function changeMonth(offset) {
