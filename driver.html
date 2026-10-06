@@ -603,28 +603,22 @@
         }
 
         
-        let unsubRes = null;
-        let unsubStatus = null;
-        let unsubMod = null;
-        let unsubMemo = null;
+        // 🚀 실시간 감시(CCTV) 전원 스위치 변수들
+        let unsubRes = null; let unsubStatus = null; let unsubMod = null; let unsubMemo = null;
 
         function loadFromFirebase() {
             showLoading('데이터 동기화 중...');
             
-            // 🚀 배차 잘림 방지를 위해 3개월 넉넉히 가져옵니다 (캐시가 있으니 요금 걱정 무!)
+            // 🚀 배차 잘림 방지를 위해 3개월 넉넉히 가져옵니다
             const startDate = new Date(currentYear, currentMonth - 1, 1);
             const endDate = new Date(currentYear, currentMonth + 2, 0); 
             
             const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-01`;
             const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
 
-            // 🚀 이미 켜져있는 CCTV가 있다면 모두 끕니다. (중복 과금 및 꼬임 방지)
-            if (unsubRes) unsubRes();
-            if (unsubStatus) unsubStatus();
-            if (unsubMod) unsubMod();
-            if (unsubMemo) unsubMemo();
+            if (unsubRes) unsubRes(); if (unsubStatus) unsubStatus(); if (unsubMod) unsubMod(); if (unsubMemo) unsubMemo();
 
-            // 🚨 핵심 포인트: .get()을 빼버리고 오직 .onSnapshot() 하나만 사용해서 읽기 요금을 반토막 냅니다.
+            // 🚨 요금 반토막 로직은 유지하고, '스르륵' 감성만 복구했습니다!
             unsubRes = db.collection('reservations')
                          .where("startDate", ">=", startStr)
                          .where("startDate", "<=", endStr)
@@ -633,40 +627,37 @@
                             snapshot.forEach(doc => { const d = doc.data(); d.id = doc.id; allReservations.push(d); });
                             
                             recalculateAll(false);
-                            if (currentDate) renderMyStatusPanel(currentDate);
                             
-                            hideLoading(); // 🚀 메인 데이터가 로딩되면 화면을 짠! 하고 켜줍니다.
-                         }, error => {
-                            console.warn("DB 연결 실패.", error);
-                            hideLoading();
-                         });
+                            hideLoading(); // 🚀 로딩창을 먼저 꺼야 스크롤이 부딪히지 않고 부드럽게 스르륵 이동합니다!
+                            
+                            // 🚨 [복구 완료] 이 녀석이 바로 오늘 날짜로 화면을 스르륵 당겨오는 핵심 부품입니다!
+                            if (currentDate) selectDate(currentDate);
+                            
+                         }, error => { console.warn("DB 연결 실패.", error); hideLoading(); });
 
             unsubStatus = db.collection('daily_status').onSnapshot(snapshot => {
                 dailyDriverStatus = {};
                 snapshot.forEach(doc => { dailyDriverStatus[doc.id] = doc.data(); });
                 recalculateAll(false);
-                if (currentDate) renderMyStatusPanel(currentDate);
+                if (currentDate) selectDate(currentDate);
             });
 
             unsubMod = db.collection('driver_modifiers').onSnapshot(snapshot => {
-                driverListModifiers = {};
-                engineModifiers = {};
+                driverListModifiers = {}; engineModifiers = {};
                 snapshot.forEach(doc => { 
                     driverListModifiers[doc.id] = doc.data().list; 
                     engineModifiers[doc.id] = doc.data().useEngineB || false; 
                 });
                 recalculateAll(false);
-                if (currentDate) renderMyStatusPanel(currentDate);
+                if (currentDate) selectDate(currentDate);
             });
 
             unsubMemo = db.collection('daily_memos').onSnapshot(snapshot => {
                 dailyMemos = {};
                 snapshot.forEach(doc => { dailyMemos[doc.id] = doc.data().text; });
-                renderCalendar(); 
-                if (currentDate) renderDispatchResult(currentDate); 
+                if (currentDate) selectDate(currentDate);
             });
         }
-
         function changeMonth(offset) {
             currentMonth += offset;
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
