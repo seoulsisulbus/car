@@ -89,7 +89,7 @@
         .event-box.seoul { background-color: #e0f7fa; border: 1px solid #b2ebf2; color: #333; } 
         .event-box.citytour { background-color: #f3e5f5; border: 1px solid #e1bee7; color: #333; } 
         .event-box.default { background-color: #f1f3f4; border: 1px solid #d8dbe0; color: #333; }
-        .badge { display: inline-block; width: 22px; padding: 3px 0; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-align: center; box-sizing: border-box; letter-spacing: -0.5px; vertical-align: baseline; }
+        .badge { padding: 2px 4px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-align: center; }
         .badge.pub { background-color: #007bff; color: #fff; } 
         .badge.grave { background-color: #28a745; color: #fff; } 
         .badge.night1 { background-color: #ffc107; color: #000; } 
@@ -703,7 +703,7 @@
             for (let d = 1; d <= lastDate; d++) updateCalendarCellUI(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
         }
 
-      function updateCalendarCellUI(date) {
+        function updateCalendarCellUI(date) {
             const tagsContainer = document.getElementById(`tags_${date}`);
             const statusContainer = document.getElementById(`cell_status_${date}`);
             if (!tagsContainer || !statusContainer) return;
@@ -714,6 +714,8 @@
             
             let tagsHTML = '';
 
+            // 🚀 [수정됨] 달력 칸 메모: 일반 배차처럼 배지 스타일 적용 (빨간 글씨)
+            // 🚀 [수정됨] 달력 칸 메모: 연핑크 바탕 + 찐핑크 글씨 + 빨간색 배지
             if (typeof dailyMemos !== 'undefined' && dailyMemos[date]) {
                 tagsHTML += `
                     <div class="event-box" style="background-color: #fce4ec; border: 1px solid #f8bbd0; width: 100%; max-width: 100%; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 4px; margin-bottom: 3px; border-radius: 4px;" title="${dailyMemos[date]}">
@@ -736,11 +738,6 @@
 
                 if (d.isManual) badgeClass = 'manual-badge';
 
-                // 🚀 [꼼수 유지] 배지 안쪽 글자만 스페이스바로 크기 맞추기
-                let badgeText = shortTypeStr;
-                if (badgeText === '1박') badgeText = '1&nbsp;&nbsp;박';
-                if (badgeText === '2박') badgeText = '2&nbsp;&nbsp;박';
-
                 let canceledBoxStyle = d.isCanceled ? 'background-color: transparent; border: 1px dashed #adb5bd; color: #adb5bd; text-decoration: line-through;' : '';
                 let canceledBadgeStyle = d.isCanceled ? 'background-color: transparent; color: #adb5bd; border: 1px solid #adb5bd;' : '';
                 
@@ -754,13 +751,11 @@
                 }).join(', ');
 
                 let attachIcon = d.photoUrl ? ' <span style="font-size:0.8rem;">📎</span>' : '';
-                
-                // 🚀 [공백 제거됨] 차 번호 앞 띄어쓰기 삭제! 예전처럼 딱 붙어서 나옵니다.
                 let dispVehicle = (d.vehicle === '3818') ? '스타리아' : d.vehicle;
 
                 tagsHTML += `
                     <div class="event-box ${boxClass}" style="${canceledBoxStyle}; cursor:pointer;" onclick="showDispatchDetail(event, '${d.id}', '${date}')">
-                        <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${badgeText}</span> 
+                        <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${shortTypeStr}</span> 
                         ${dispVehicle}: ${assignedNamesHTML}${attachIcon}
                     </div>`;
             });
@@ -796,7 +791,7 @@
             if (!d) return;
 
             let assigned = (d.assigned && d.assigned.length > 0) ? d.assigned.join(', ') : '미정';
-            let dispVehicle = (d.vehicle === '3818') ? '스타리아' : d.vehicle; 
+            let dispVehicle = (d.vehicle === '3818') ? '스타리아' : d.vehicle; // 🚀 상세 팝업에서도 스타리아
 
             document.getElementById('detail-modal-title').innerText = `[${dispVehicle}] ${d.type} (${clickedDate})`;
             document.getElementById('detail-modal-drivers').innerText = assigned;
@@ -878,13 +873,14 @@
 
             overtime = Math.round(overtime * 100) / 100;
 
+            // 🚀 [수정됨] 대망의 12,500원 완벽 분리 로직!
             let allowance = 0;
             if (type.includes('1박') || type.includes('2박')) {
                 allowance = 37500;
             } else if (type.includes('공공') || type.includes('성묘') || type.includes('기타(외곽)') || type === '기타') {
-                allowance = 12500; 
+                allowance = 12500; // 🔥 외곽이나 기존 기타는 무조건 12,500원 꽂아줍니다!
             } else if (type.includes('서울운행') || type === '서울' || type.includes('시티') || type.includes('기타(서울)')) {
-                allowance = 0; 
+                allowance = 0; // 🔥 서울 시내는 짤없이 0원!
             }
 
             return { overtime: overtime, allowance: allowance };
@@ -1015,6 +1011,7 @@
 
             let html = '';
 
+            // 🚀 [추가됨] 기사님 하단 리스트 맨 위에 '핑크색 메모장' 띄우기 (읽기 전용)
             if (typeof dailyMemos !== 'undefined' && dailyMemos[date]) {
                 html += `
                 <li style="background-color: #fce4ec; border: 2px solid #f8bbd0; margin-bottom: 12px; border-radius: 6px; padding: 15px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -1028,6 +1025,7 @@
             } else {
                 activeReservations.forEach(d => {
                     let shortTypeStr = getShortType(d.type);
+
                     let badgeClass = 'default';
 
                     if (shortTypeStr === '공공') badgeClass = 'pub';
@@ -1039,11 +1037,6 @@
                     else if (shortTypeStr === '기타') badgeClass = 'default';
 
                     if (d.isManual) badgeClass = 'manual-badge';
-
-                    // 🚀 [꼼수 유지] 하단 리스트에서도 배지 글씨 맞추기
-                    let badgeText = shortTypeStr;
-                    if (badgeText === '1박') badgeText = '1&nbsp;&nbsp;박';
-                    if (badgeText === '2박') badgeText = '2&nbsp;&nbsp;박';
 
                     let canceledLiStyle = d.isCanceled ? 'color: #adb5bd; text-decoration: line-through;' : '';
                     let canceledBadgeStyle = d.isCanceled ? 'background-color: transparent; color: #adb5bd; border: 1px solid #adb5bd;' : '';
@@ -1071,13 +1064,12 @@
                     let attachIcon = d.photoUrl ? ' <span style="font-size:0.9rem;">📎</span>' : '';
                     let liStyle = canceledLiStyle + ' border: 2px solid #007bff; background-color: #f0f7ff; cursor: pointer;';
                     
-                    // 🚀 [공백 제거됨] 하단 리스트에서도 1호차 앞 띄어쓰기 삭제!
                     let dispVehicle = (d.vehicle === '3818') ? '스타리아' : d.vehicle;
 
                     html += `
                         <li style="${liStyle}" onclick="showDispatchDetail(event, '${d.id}', '${date}')">
                             <b>[${dispVehicle}]</b>
-                            <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${badgeText}</span> 
+                            <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${shortTypeStr}</span> 
                             <span class="badge default" style="margin-right:0; ${canceledBadgeStyle}">${d.km}km</span>
                             ${d.isCanceled ? '<span style="color:#d9534f; font-weight:bold; margin-left:5px; text-decoration:none;">[취소됨]</span>' : ''}<br>
                             내용: ${d.dest} <br>
@@ -1105,6 +1097,7 @@
 
             contentUl.innerHTML = html;
         }
+
         function renderMonthlySummary() {
             const container = document.getElementById('monthly-summary-container');
             
