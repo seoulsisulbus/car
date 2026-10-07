@@ -82,7 +82,7 @@
         .event-box.citytour { background-color: #f3e5f5; border: 1px solid #e1bee7; color: #333; } 
         .event-box.default { background-color: #f1f3f4; border: 1px solid #d8dbe0; color: #333; }
 
-        .badge { display: inline-block; width: 22px; padding: 3px 0; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-align: center; box-sizing: border-box; letter-spacing: -0.5px; vertical-align: baseline; }
+        .badge { padding: 2px 4px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-align: center; }
         .badge.pub { background-color: #007bff; color: #fff; } 
         .badge.grave { background-color: #28a745; color: #fff; } 
         .badge.night1 { background-color: #ffc107; color: #000; } 
@@ -1225,6 +1225,8 @@
             
             let tagsHTML = '';
 
+            // 🚀 [수정됨] 달력 칸 메모: 다른 배차처럼 통일감 있는 배지 스타일 (빨간 글씨)
+            // 🚀 [수정됨] 달력 칸 메모: 연핑크 바탕 + 찐핑크 글씨 + 빨간색 배지
             if (typeof dailyMemos !== 'undefined' && dailyMemos[date]) {
                 tagsHTML += `
                     <div class="event-box" style="background-color: #fce4ec; border: 1px solid #f8bbd0; width: 100%; max-width: 100%; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 4px; margin-bottom: 3px; border-radius: 4px;" title="${dailyMemos[date]}">
@@ -1247,11 +1249,6 @@
 
                 if (d.isManual) badgeClass = 'manual-badge';
 
-                // 🚀 [꼼수 유지] 배지 안쪽 글자만 스페이스바로 크기 맞추기
-                let badgeText = shortTypeStr;
-                if (badgeText === '1박') badgeText = '1&nbsp;&nbsp;박';
-                if (badgeText === '2박') badgeText = '2&nbsp;&nbsp;박';
-
                 let canceledBoxStyle = d.isCanceled ? 'background-color: transparent; border: 1px dashed #adb5bd; color: #adb5bd; text-decoration: line-through;' : '';
                 let canceledBadgeStyle = d.isCanceled ? 'background-color: transparent; color: #adb5bd; border: 1px solid #adb5bd;' : '';
                 
@@ -1261,14 +1258,11 @@
                 }).join(', ');
 
                 let attachIcon = d.photoUrl ? ' <span style="font-size:0.8rem;">📎</span>' : '';
-                
-                // 🚀 [공백 제거됨] 차 번호 앞 띄어쓰기 삭제! 예전처럼 꽉 차게 나옵니다.
-                let dispVehicle = (d.vehicle === '3818') ? '스타리아' : d.vehicle;
 
                 tagsHTML += `
                     <div class="event-box ${boxClass}" style="${canceledBoxStyle}; cursor:pointer;" onclick="showDispatchDetail(event, '${d.id}', '${date}')">
-                        <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${badgeText}</span> 
-                        ${dispVehicle}: ${assignedNamesHTML}${attachIcon}
+                        <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${shortTypeStr}</span> 
+                        ${d.vehicle}: ${assignedNamesHTML}${attachIcon}
                     </div>`;
             });
 
@@ -1287,7 +1281,7 @@
                 let offNames = offDrivers.map(n => getDispName(n)).join(', ');
                 statusHTML += `<div class="cal-status off"><span style="color:#d9534f; font-weight:700;">휴무: </span><span class="names" style="color:#007bff; font-weight:700;">${offNames}</span></div>`;
             }
-
+            
             if (statusHTML !== '') {
                 statusContainer.style.display = 'flex';
                 statusContainer.innerHTML = statusHTML;
@@ -1382,11 +1376,6 @@
 
                     if (d.isManual) badgeClass = 'manual-badge';
 
-                    // 🚀 [꼼수 유지] 하단 리스트에서도 배지 글씨 맞추기
-                    let badgeText = shortTypeStr;
-                    if (badgeText === '1박') badgeText = '1&nbsp;&nbsp;박';
-                    if (badgeText === '2박') badgeText = '2&nbsp;&nbsp;박';
-
                     let canceledLiStyle = d.isCanceled ? 'color: #adb5bd; text-decoration: line-through;' : '';
                     let canceledBadgeStyle = d.isCanceled ? 'background-color: transparent; color: #adb5bd; border: 1px solid #adb5bd;' : '';
                     
@@ -1398,43 +1387,21 @@
                     if ((d.assigned || []).length === 0) assignedNamesHTML = '인원 부족';
 
                     let attachIcon = d.photoUrl ? ' <span style="font-size:0.9rem;">📎</span>' : '';
-                    
-                    // 🚀 [공백 제거됨] 하단 리스트에서도 1호차 앞 띄어쓰기 삭제!
-                    let dispVehicle = (d.vehicle === '3818') ? '스타리아' : d.vehicle;
-                    
-                    // 🚀 정산 버튼 등등 (관리자는 클릭 시 해당 차량 클릭 동작 연결 유지)
-                    const isAdmin = localStorage.getItem('userRole') === 'admin';
-                    let onClickLogic = isAdmin ? `onclick="document.getElementById('v_${d.vehicle}').click(); window.scrollTo(0,0);"` : `onclick="showDispatchDetail(event, '${d.id}', '${date}')"`;
-
-                    let reportText = '';
-                    const mySettle = (d.settlement && d.settlement[currentUser] && d.settlement[currentUser][date]) ? d.settlement[currentUser][date] : null;
-                    if (mySettle) {
-                        reportText = `<div style="margin-top:6px; font-size:0.85rem; color:#155724; background:#d4edda; padding:4px 8px; border-radius:4px; display:inline-block; border: 1px solid #c3e6cb;">
-                            ${mySettle.isEarly ? '[선운행] ' : ''}${mySettle.clockIn}~${mySettle.clockOut} (보상: ${Number(mySettle.overtime).toFixed(2)} | 일비: ${Number(mySettle.allowance).toLocaleString()}원)
-                        </div>`;
-                    }
-
-                    let settleBtn = '';
-                    if ((d.assigned || []).includes(currentUser) && !d.isCanceled) {
-                        settleBtn = `<button onclick="openSettlementModal(event, '${d.id}', '${date}')" style="margin-top:6px; margin-right:5px; background:#ffc107; color:#000; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; font-size:0.85rem; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.2);">💰 내 정산입력</button>`;
-                    }
 
                     html += `
-                        <li style="${canceledLiStyle} cursor:pointer;" ${onClickLogic}>
-                            <b>[${dispVehicle}]</b>${attachIcon} 
-                            <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${badgeText}</span> 
+                        <li style="${canceledLiStyle}">
+                            <b>[${d.vehicle}]</b>${attachIcon} 
+                            <span class="badge ${badgeClass}" style="${canceledBadgeStyle}">${shortTypeStr}</span> 
                             <span class="badge default" style="margin-right:0; ${canceledBadgeStyle}">${d.km}km</span>
                             ${d.isCanceled ? '<span style="color:#d9534f; font-weight:bold; margin-left:5px; text-decoration:none;">[취소됨]</span>' : ''}<br>
                             <span style="color: #007bff; font-weight: bold; font-size: 0.95rem; margin: 4px 0; display: inline-block;">[${d.start || '미입력'} ➔ ${d.end || '미입력'}]</span><br>
                             내용: ${d.dest} <br>
                             운전원: <b style="${d.isCanceled ? 'color:#adb5bd;' : 'color:#28a745;'}">${assignedNamesHTML}</b>
-                            <div style="margin-top: 4px;">
-                                ${settleBtn}
-                                ${reportText}
-                            </div>
                         </li>`;
                 });
             }
+        
+    
 
             const statusData = dailyDriverStatus[date] || {};
             const offDrivers = Object.keys(statusData).filter(d => statusData[d] === '휴무');
@@ -1453,15 +1420,17 @@
             }
             contentUl.innerHTML = html;
             
-            // --- 🚀 [관리자용 신청서 첨부 리스트 유지] ---
+            // --- 🚀 [초슬림 수정됨] 날짜별 신청서 리스트 & 드롭다운 자동 업데이트 ---
             const attachmentUl = document.getElementById('daily-attachment-list');
             if (attachmentUl) {
                 const files = (typeof dailyAttachments !== 'undefined' && dailyAttachments[date]) ? dailyAttachments[date] : [];
                 let attachHtml = '';
-                let optionsHtml = '<option value="">연결 안 함 (선택)</option>'; 
+                let optionsHtml = '<option value="">연결 안 함 (선택)</option>'; // 🚀 드롭다운용 빈칸 
                 
+                // 파일이 있을 때만 실행
                 if (files.length > 0) {
                     files.forEach((f, idx) => {
+                        // 1. 화면에 보이는 리스트 만들기
                         attachHtml += `
                             <li style="margin-bottom: 5px; display: flex; gap: 5px; align-items: center;">
                                 <a href="${f.url}" target="_blank" style="flex: 1; display: block; text-decoration: none; color: #0056b3; background: #f0f7ff; border: 1px solid #b8daff; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">
@@ -1469,16 +1438,19 @@
                                 </a>
                                 <button onclick="deleteDailyFile('${date}', ${idx})" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">삭제</button>
                             </li>`;
+                            
+                        // 🚀 2. 드롭다운 안에 들어갈 옵션들도 척척 만들기!
                         optionsHtml += `<option value="${f.url}">${f.name}</option>`;
                     });
                 }
                 attachmentUl.innerHTML = attachHtml;
 
+                // 🚀 3. 마법의 주문: 모든 차량 입력칸의 드롭다운을 찾아서 방금 만든 목록을 촥! 쏴주기
                 document.querySelectorAll('.daily-photo-selector').forEach(select => {
                     select.innerHTML = optionsHtml;
                 });
             }
-        }
+        } // 🚀 함수 끝!
         function renderStatusPanel(date) {
             const container = document.getElementById('status-container');
             container.innerHTML = '';
